@@ -1,0 +1,69 @@
+{
+  "aceh": [
+    "indigo",
+    "biru",
+    "gading",
+    "hitam"
+  ],
+  "betawi": [
+    "emas",
+    "indigo",
+    "gading",
+    "biru"
+  ],
+  "ceplok": [
+    "sogan",
+    "hitam",
+    "gading",
+    "indigo"
+  ],
+  "kawung": [
+    "gading",
+    "hitam",
+    "sogan",
+    "terakota"
+  ],
+  "megamendung": [
+    "indigo",
+    "gading",
+    "biru"
+  ],
+  "parang": [
+    "gading",
+    "sogan",
+    "hitam",
+    "emas"
+  ],
+  "polengbali": [
+    "hitam",
+    "gading",
+    "sogan"
+  ],
+  "sekarjagad": [
+    "gading",
+    "terakota",
+    "emas",
+    "biru"
+  ],
+  "shaho": [
+    "merah",
+    "terakota",
+    "gading"
+  ],
+  "sidomukti": [
+    "emas",
+    "terakota",
+    "sogan",
+    "hitam"
+  ],
+  "simbut": [
+    "sogan",
+    "hitam",
+    "gading"
+  ],
+  "truntum": [
+    "hitam",
+    "indigo",
+    "sogan"
+  ]
+}

@@ -1,0 +1,435 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { MOTIFS, COLOR_TOKENS } from '../data/motifs.js';
+
+// Kirim data warna motif ke client untuk algoritma color matching
+const motifColorData = MOTIFS.map(m => ({
+  id: m.id,
+  name: m.name,
+  region: m.region,
+  colors: m.colors,
+}));
+
+// Hex tiap token warna
+const tokenHex = Object.fromEntries(
+  Object.entries(COLOR_TOKENS).map(([k, v]) => [k, v.hex])
+);
+---
+
+<Layout title="AI Batik Scanner — Batikku">
+
+  <!-- HERO -->
+  <section class="max-w-content mx-auto px-5 sm:px-8 lg:px-16 pt-10 sm:pt-16 pb-6 text-center">
+    <h1 class="text-4xl sm:text-6xl tracking-tight max-w-[20ch] mx-auto mb-4 leading-[1.1]">
+      Foto kain batikmu, <em class="italic text-sogan">temukan motifnya.</em>
+    </h1>
+    <p class="text-base sm:text-lg text-ink-soft max-w-[54ch] mx-auto">
+      Unggah foto batik apa saja, dan temukan motif yang paling mendekati — lewat warna dan analisis pola.
+    </p>
+  </section>
+
+  <!-- SCANNER -->
+  <section class="max-w-[900px] mx-auto px-5 sm:px-8 pb-20">
+
+    <!-- UPLOAD AREA -->
+    <div id="uploadArea" class="relative border-2 border-dashed border-sogan/40 rounded-3xl bg-cream-soft p-8 sm:p-12 text-center cursor-pointer hover:border-sogan/70 hover:bg-cream-soft/60 transition">
+      <input type="file" id="fileInput" accept="image/*" class="hidden" />
+      <div id="uploadPrompt">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto text-sogan mb-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        <p class="font-display text-xl mb-1">Klik atau seret foto ke sini</p>
+        <p class="text-sm text-ink-soft">JPG, PNG, atau WEBP · Maks 4MB</p>
+      </div>
+    </div>
+
+    <!-- PREVIEW + RESULT (hidden awalnya) -->
+    <div id="scanArea" class="hidden mt-6">
+      <div class="grid md:grid-cols-2 gap-6">
+
+        <!-- Kolom kiri: preview foto -->
+        <div>
+          <div class="rounded-2xl overflow-hidden border border-line bg-cream-soft aspect-square">
+            <img id="previewImg" class="w-full h-full object-cover" alt="Preview batik" />
+          </div>
+          <div class="flex gap-3 mt-4">
+            <button id="resetBtn" class="flex-1 py-2.5 px-4 rounded-full border-[1.5px] border-ink text-sm font-semibold hover:bg-ink hover:text-cream transition">Ganti Foto</button>
+            <button id="analyzeBtn" class="flex-1 py-2.5 px-4 rounded-full bg-sogan text-cream text-sm font-semibold hover:bg-sogan-deep transition">Analisis Ulang</button>
+          </div>
+        </div>
+
+        <!-- Kolom kanan: hasil -->
+        <div class="space-y-5">
+
+          <!-- JALUR A: Color Matching -->
+          <div class="bg-cream-soft border border-line rounded-2xl p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-7 h-7 rounded-full bg-teal-700/15 text-teal-800 grid place-items-center text-xs font-bold">A</span>
+              <h3 class="font-display text-base">Pencocokan Warna</h3>
+              
+            </div>
+            <div id="colorResult">
+              <p class="text-sm text-ink-soft italic">Menunggu analisis warna...</p>
+            </div>
+          </div>
+
+          <!-- JALUR B: Gemini Vision -->
+          <div class="bg-indigo-deep text-cream rounded-2xl p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-7 h-7 rounded-full bg-gold/25 text-gold grid place-items-center text-xs font-bold">B</span>
+              <h3 class="font-display text-base text-cream">Analisis AI (Gemini)</h3>
+              
+            </div>
+            <div id="aiResult">
+              <p class="text-sm text-cream/60 italic">Menunggu analisis AI...</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Kesimpulan gabungan -->
+      <div id="combinedResult" class="hidden mt-6 bg-gradient-to-br from-sogan/5 to-transparent border border-sogan/20 rounded-2xl p-6">
+        <p class="text-[0.7rem] font-bold tracking-[0.14em] uppercase text-sogan mb-2">◆ Kesimpulan</p>
+        <div id="combinedContent"></div>
+      </div>
+    </div>
+
+    <!-- Catatan singkat -->
+    <p class="text-xs text-ink-soft/70 italic text-center mt-8 max-w-[60ch] mx-auto">
+      Gunakan foto dengan pencahayaan baik dan pola yang terlihat jelas untuk hasil terbaik.
+    </p>
+  </section>
+
+  <script is:inline define:vars={{ motifColorData, tokenHex }}>
+    window.__MOTIF_COLORS = motifColorData;
+    window.__TOKEN_HEX = tokenHex;
+  </script>
+
+  <script is:inline>
+    (function() {
+      const fileInput = document.getElementById('fileInput');
+      const uploadArea = document.getElementById('uploadArea');
+      const uploadPrompt = document.getElementById('uploadPrompt');
+      const scanArea = document.getElementById('scanArea');
+      const previewImg = document.getElementById('previewImg');
+      const resetBtn = document.getElementById('resetBtn');
+      const analyzeBtn = document.getElementById('analyzeBtn');
+      const colorResult = document.getElementById('colorResult');
+      const aiResult = document.getElementById('aiResult');
+      const combinedResult = document.getElementById('combinedResult');
+      const combinedContent = document.getElementById('combinedContent');
+
+      const MOTIF_COLORS = window.__MOTIF_COLORS;
+      const TOKEN_HEX = window.__TOKEN_HEX;
+
+      let currentBase64 = null;
+      let currentMime = null;
+
+      // ===== HELPER: hex -> RGB =====
+      function hexToRgb(hex) {
+        const h = hex.replace('#', '');
+        return {
+          r: parseInt(h.substring(0, 2), 16),
+          g: parseInt(h.substring(2, 4), 16),
+          b: parseInt(h.substring(4, 6), 16),
+        };
+      }
+
+      // ===== HELPER: RGB -> LAB (untuk perbandingan warna yang lebih akurat) =====
+      function rgbToLab(rgb) {
+        let { r, g, b } = rgb;
+        r /= 255; g /= 255; b /= 255;
+        r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
+        g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
+        b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
+        let x = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047;
+        let y = (r * 0.2126 + g * 0.7152 + b * 0.0722) / 1.00000;
+        let z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883;
+        x = x > 0.008856 ? Math.pow(x, 1/3) : (7.787 * x) + 16/116;
+        y = y > 0.008856 ? Math.pow(y, 1/3) : (7.787 * y) + 16/116;
+        z = z > 0.008856 ? Math.pow(z, 1/3) : (7.787 * z) + 16/116;
+        return { L: (116 * y) - 16, a: 500 * (x - y), b: 200 * (y - z) };
+      }
+
+      // Delta E (jarak warna di LAB space)
+      function deltaE(lab1, lab2) {
+        return Math.sqrt(
+          Math.pow(lab1.L - lab2.L, 2) +
+          Math.pow(lab1.a - lab2.a, 2) +
+          Math.pow(lab1.b - lab2.b, 2)
+        );
+      }
+
+      // ===== JALUR A: Ekstrak warna dominan dari foto (K-means sederhana) =====
+      function extractDominantColors(img, k = 4) {
+        const canvas = document.createElement('canvas');
+        const size = 80; // downscale untuk kecepatan
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, size, size);
+        const data = ctx.getImageData(0, 0, size, size).data;
+
+        // Kumpulkan pixel
+        const pixels = [];
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i + 3] < 125) continue; // skip transparan
+          pixels.push([data[i], data[i + 1], data[i + 2]]);
+        }
+
+        // K-means sederhana
+        let centroids = [];
+        for (let i = 0; i < k; i++) {
+          centroids.push(pixels[Math.floor(Math.random() * pixels.length)].slice());
+        }
+
+        for (let iter = 0; iter < 10; iter++) {
+          const clusters = Array.from({ length: k }, () => []);
+          pixels.forEach(p => {
+            let minDist = Infinity, idx = 0;
+            centroids.forEach((c, ci) => {
+              const d = Math.pow(p[0]-c[0],2) + Math.pow(p[1]-c[1],2) + Math.pow(p[2]-c[2],2);
+              if (d < minDist) { minDist = d; idx = ci; }
+            });
+            clusters[idx].push(p);
+          });
+          centroids = clusters.map((cl, ci) => {
+            if (cl.length === 0) return centroids[ci];
+            const sum = cl.reduce((a, p) => [a[0]+p[0], a[1]+p[1], a[2]+p[2]], [0,0,0]);
+            return [sum[0]/cl.length, sum[1]/cl.length, sum[2]/cl.length];
+          });
+        }
+
+        return centroids.map(c => ({ r: Math.round(c[0]), g: Math.round(c[1]), b: Math.round(c[2]) }));
+      }
+
+      // Map warna dominan foto ke token warna Batikku terdekat
+      function matchToTokens(dominantColors) {
+        const tokenLabs = Object.entries(TOKEN_HEX).map(([name, hex]) => ({
+          name, lab: rgbToLab(hexToRgb(hex)),
+        }));
+        const matched = new Set();
+        dominantColors.forEach(rgb => {
+          const lab = rgbToLab(rgb);
+          let minD = Infinity, best = null;
+          tokenLabs.forEach(t => {
+            const d = deltaE(lab, t.lab);
+            if (d < minD) { minD = d; best = t.name; }
+          });
+          if (best) matched.add(best);
+        });
+        return [...matched];
+      }
+
+      // Cari motif yang token warnanya paling tumpang tindih
+      function findMatchingMotifs(matchedTokens) {
+        return MOTIF_COLORS.map(m => {
+          const overlap = m.colors.filter(c => matchedTokens.includes(c)).length;
+          const score = overlap / Math.max(m.colors.length, 1);
+          return { ...m, overlap, score };
+        })
+        .filter(m => m.overlap > 0)
+        .sort((a, b) => b.score - a.score || b.overlap - a.overlap)
+        .slice(0, 3);
+      }
+
+      function runColorMatching(img) {
+        try {
+          const dominant = extractDominantColors(img, 4);
+          const tokens = matchToTokens(dominant);
+          const matches = findMatchingMotifs(tokens);
+
+          // Render swatch warna dominan
+          let swatchHtml = '<div class="flex gap-1.5 mb-3">';
+          dominant.forEach(c => {
+            swatchHtml += `<div class="w-7 h-7 rounded-md border border-ink/10" style="background: rgb(${c.r},${c.g},${c.b})"></div>`;
+          });
+          swatchHtml += '</div>';
+
+          let tokenHtml = '<p class="text-xs text-ink-soft mb-3">Token warna terdeteksi: <strong>' + (tokens.join(', ') || '-') + '</strong></p>';
+
+          let matchHtml = '';
+          if (matches.length) {
+            matchHtml = '<div class="space-y-2">';
+            matches.forEach(m => {
+              const pct = Math.round(m.score * 100);
+              matchHtml += `<a href="/motif/${m.id}" class="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-cream hover:bg-sogan/8 border border-line transition">
+                <span class="font-medium text-sm">${m.name}</span>
+                <span class="text-xs text-ink-soft">${m.region} · ${pct}% cocok</span>
+              </a>`;
+            });
+            matchHtml += '</div>';
+          } else {
+            matchHtml = '<p class="text-sm text-ink-soft">Tidak ada motif dengan palet warna serupa.</p>';
+          }
+
+          colorResult.innerHTML = swatchHtml + tokenHtml + matchHtml;
+          return { tokens, matches };
+        } catch (e) {
+          colorResult.innerHTML = '<p class="text-sm text-red-700">Gagal menganalisis warna: ' + e.message + '</p>';
+          return { tokens: [], matches: [] };
+        }
+      }
+
+      // ===== JALUR B: Gemini Vision via Netlify Function =====
+      async function runGeminiAnalysis() {
+        aiResult.innerHTML = '<div class="flex items-center gap-2 text-sm text-cream/70"><span class="inline-block w-4 h-4 border-2 border-cream/30 border-t-gold rounded-full animate-spin"></span> AI sedang menganalisis pola...</div>';
+        try {
+          const res = await fetch('/.netlify/functions/analyze-batik', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageBase64: currentBase64, mimeType: currentMime }),
+          });
+
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            aiResult.innerHTML = `<p class="text-sm text-cream/80">Analisis AI tidak tersedia saat ini.</p>
+              <p class="text-xs text-cream/50 mt-1">${err.error || 'Coba lagi nanti.'} (Pencocokan warna di sebelah tetap berfungsi.)</p>`;
+            return null;
+          }
+
+          const data = await res.json();
+          const a = data.analysis;
+          if (!a) {
+            aiResult.innerHTML = '<p class="text-sm text-cream/70">AI tidak memberikan hasil.</p>';
+            return null;
+          }
+
+          const confColor = a.confidence === 'tinggi' ? 'text-green-300' : a.confidence === 'sedang' ? 'text-gold' : 'text-cream/60';
+          let html = '';
+          if (!a.isBatik) {
+            html = '<p class="text-sm text-cream/90">Gambar ini sepertinya bukan batik. Coba unggah foto kain batik.</p>';
+          } else {
+            html = `<div class="mb-2">
+              <span class="font-display text-xl text-cream">${a.topGuess}</span>
+              <span class="text-xs ${confColor} ml-2">keyakinan ${a.confidence}</span>
+            </div>
+            <p class="text-sm text-cream/85 mb-3">${a.reasoning}</p>`;
+            if (a.visualFeatures && a.visualFeatures.length) {
+              html += '<div class="flex flex-wrap gap-1.5 mb-2">';
+              a.visualFeatures.forEach(f => {
+                html += `<span class="text-[0.7rem] px-2 py-1 rounded-full bg-cream/10 text-cream/80">${f}</span>`;
+              });
+              html += '</div>';
+            }
+            if (a.alternativeGuesses && a.alternativeGuesses.length) {
+              html += `<p class="text-xs text-cream/50 mt-2">Alternatif: ${a.alternativeGuesses.join(', ')}</p>`;
+            }
+          }
+          aiResult.innerHTML = html;
+          return a;
+        } catch (e) {
+          aiResult.innerHTML = `<p class="text-sm text-cream/80">Gagal menghubungi AI.</p>
+            <p class="text-xs text-cream/50 mt-1">Periksa koneksi internet. Pencocokan warna tetap berfungsi.</p>`;
+          return null;
+        }
+      }
+
+      // ===== Gabungkan hasil A + B (prioritas: AI vision lihat pola) =====
+      function showCombined(colorData, aiData) {
+        let html = '';
+        const colorTop = colorData.matches[0]?.name || null;
+        const aiIsBatik = aiData?.isBatik;
+        const aiTop = (aiData && aiData.isBatik && aiData.topGuess && aiData.topGuess !== 'Tidak yakin' && aiData.topGuess !== 'Bukan batik') ? aiData.topGuess : null;
+        const aiConf = aiData?.confidence;
+
+        // Kasus 1: AI bilang BUKAN batik → percaya AI (dia lihat keseluruhan gambar)
+        if (aiData && aiIsBatik === false) {
+          html = `<p class="text-ink"><strong class="text-sogan">Ini sepertinya bukan kain batik.</strong> ${aiData.reasoning || ''} Coba unggah foto kain batik yang jelas.</p>`;
+          combinedContent.innerHTML = html;
+          combinedResult.classList.remove('hidden');
+          return;
+        }
+
+        // Helper: cek apakah dua nama motif merujuk hal yang sama
+        function sameMotif(a, b) {
+          if (!a || !b) return false;
+          const na = a.toLowerCase().replace('batik ', '').trim();
+          const nb = b.toLowerCase().replace('batik ', '').trim();
+          return na.includes(nb) || nb.includes(na);
+        }
+
+        // Kasus 2: AI & warna sepakat → keyakinan tinggi
+        if (aiTop && colorTop && sameMotif(aiTop, colorTop)) {
+          html = `<p class="text-ink">Kedua metode sepakat: motif ini paling mendekati <strong class="text-sogan">${aiTop}</strong>. Tingkat keyakinan tinggi karena pola dan warna sama-sama cocok.</p>`;
+        }
+        // Kasus 3: AI yakin (tinggi/sedang) → utamakan AI karena dia baca pola
+        else if (aiTop && (aiConf === 'tinggi' || aiConf === 'sedang')) {
+          html = `<p class="text-ink">Berdasarkan analisis pola oleh AI, motif ini paling mendekati <strong class="text-sogan">${aiTop}</strong>${colorTop ? `, meski dari sisi warna mirip dengan ${colorTop}` : ''}. AI membaca bentuk pola, bukan hanya warna.</p>`;
+        }
+        // Kasus 4: AI ragu tapi ada hasil warna
+        else if (colorTop) {
+          html = `<p class="text-ink">${aiTop ? `AI menebak <strong class="text-sogan">${aiTop}</strong> (dengan keyakinan rendah), dan dari` : 'Dari'} sisi warna, motif terdekat adalah <strong class="text-sogan">${colorTop}</strong>. Untuk hasil lebih pasti, coba foto dengan pola yang lebih jelas terlihat.</p>`;
+        }
+        // Kasus 5: tidak ada hasil sama sekali
+        else {
+          html = `<p class="text-ink">Belum bisa menyimpulkan motif dengan yakin. Pastikan foto fokus pada kain batik dengan pencahayaan baik dan pola terlihat jelas.</p>`;
+        }
+        combinedContent.innerHTML = html;
+        combinedResult.classList.remove('hidden');
+      }
+
+      // ===== Orchestrate: jalankan kedua jalur =====
+      async function analyze() {
+        combinedResult.classList.add('hidden');
+        const img = new Image();
+        img.onload = async () => {
+          const colorData = runColorMatching(img);        // Jalur A (instant)
+          const aiData = await runGeminiAnalysis();        // Jalur B (async)
+          showCombined(colorData, aiData);
+        };
+        img.src = previewImg.src;
+      }
+
+      // ===== File handling =====
+      function handleFile(file) {
+        if (!file || !file.type.startsWith('image/')) {
+          alert('Tolong pilih file gambar (JPG/PNG/WEBP).');
+          return;
+        }
+        if (file.size > 4 * 1024 * 1024) {
+          alert('Ukuran file maksimal 4MB. Tolong kompres dulu.');
+          return;
+        }
+        currentMime = file.type;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target.result;
+          previewImg.src = dataUrl;
+          currentBase64 = dataUrl.split(',')[1]; // buang prefix data:...;base64,
+          uploadArea.classList.add('hidden');
+          scanArea.classList.remove('hidden');
+          analyze();
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // Event listeners
+      uploadArea.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('border-sogan/70');
+      });
+      uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('border-sogan/70'));
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('border-sogan/70');
+        handleFile(e.dataTransfer.files[0]);
+      });
+
+      resetBtn.addEventListener('click', () => {
+        scanArea.classList.add('hidden');
+        uploadArea.classList.remove('hidden');
+        fileInput.value = '';
+        currentBase64 = null;
+        colorResult.innerHTML = '<p class="text-sm text-ink-soft italic">Menunggu analisis warna...</p>';
+        aiResult.innerHTML = '<p class="text-sm text-cream/60 italic">Menunggu analisis AI...</p>';
+        combinedResult.classList.add('hidden');
+      });
+
+      analyzeBtn.addEventListener('click', analyze);
+    })();
+  </script>
+
+</Layout>

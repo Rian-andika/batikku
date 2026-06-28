@@ -1,0 +1,259 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { MOTIFS, COLOR_TOKENS } from '../data/motifs.js';
+
+// Statistics — diambil otomatis dari data nyata
+const stats = {
+  motifs:  MOTIFS.length,
+  regions: (() => {
+    const set = new Set();
+    MOTIFS.forEach(m => m.region.split('&').forEach(r => {
+      let name = r.trim();
+      if (name === 'Solo') name = 'Surakarta';
+      if (name) set.add(name);
+    }));
+    return set.size;
+  })(),
+  colors:  Object.keys(COLOR_TOKENS).length,
+  sources: MOTIFS.reduce((sum, m) => sum + (m.sources?.length || 0), 0),
+};
+---
+
+<Layout title="Filosofi — Batikku">
+
+  <!-- HERO dengan pola batik subtle di background -->
+  <div class="relative overflow-hidden">
+    <!-- Pola parang di kiri (subtle) -->
+    <svg class="absolute -left-12 top-0 bottom-0 h-full w-[200px] opacity-[0.07] text-sogan pointer-events-none hidden sm:block" viewBox="0 0 200 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round">
+        <path d="M-30,80 Q0,40 30,80 T90,80 T150,80 T210,80"/>
+        <path d="M-30,140 Q0,100 30,140 T90,140 T150,140 T210,140"/>
+        <path d="M-30,200 Q0,160 30,200 T90,200 T150,200 T210,200"/>
+        <path d="M-30,260 Q0,220 30,260 T90,260 T150,260 T210,260"/>
+        <path d="M-30,320 Q0,280 30,320 T90,320 T150,320 T210,320"/>
+        <path d="M-30,380 Q0,340 30,380 T90,380 T150,380 T210,380"/>
+        <path d="M-30,440 Q0,400 30,440 T90,440 T150,440 T210,440"/>
+        <path d="M-30,500 Q0,460 30,500 T90,500 T150,500 T210,500"/>
+      </g>
+    </svg>
+
+    <!-- Pola kawung di kanan bawah (subtle) -->
+    <svg class="absolute right-8 bottom-4 w-[120px] h-[120px] opacity-[0.08] text-sogan pointer-events-none hidden md:block" viewBox="0 0 100 100" aria-hidden="true">
+      <g fill="none" stroke="currentColor" stroke-width="2.5" transform="translate(50,50)">
+        <ellipse cx="-15" cy="-15" rx="8" ry="14"/>
+        <ellipse cx="15" cy="-15" rx="8" ry="14"/>
+        <ellipse cx="-15" cy="15" rx="8" ry="14"/>
+        <ellipse cx="15" cy="15" rx="8" ry="14"/>
+        <circle r="2" fill="currentColor"/>
+      </g>
+    </svg>
+
+    <div class="relative max-w-content mx-auto px-5 sm:px-8 lg:px-16 pt-10 sm:pt-16 pb-10 sm:pb-14 text-center">
+      <p class="section-label justify-center inline-flex">◆ Tentang Proyek</p>
+      <h1 class="text-4xl sm:text-6xl tracking-tight max-w-[22ch] mx-auto mt-3 mb-5 leading-[1.1]">
+        Merawat makna, <em class="italic text-sogan">bukan sekadar gambar.</em>
+      </h1>
+      <p class="text-base sm:text-lg text-ink-soft max-w-[54ch] mx-auto">Batikku lahir dari satu keyakinan: warisan budaya layak disajikan dengan kualitas yang setara dengan nilainya.</p>
+    </div>
+  </div>
+
+  <!-- STATISTICS COUNTER -->
+  <section class="max-w-content mx-auto px-5 sm:px-8 lg:px-16 pb-6 sm:pb-10">
+    <div id="statsRow" class="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 py-8 sm:py-10 border-y border-line">
+      <div class="stat-item text-center" data-stat-index="0">
+        <div class="counter font-display text-4xl sm:text-5xl lg:text-6xl font-medium text-sogan leading-none mb-2" data-target={stats.motifs}>0</div>
+        <div class="stat-line w-0 h-px bg-gold mx-auto mb-2"></div>
+        <div class="stat-label text-xs sm:text-sm font-semibold text-ink mb-0.5">Motif Batik</div>
+        <div class="stat-label text-[0.7rem] sm:text-xs text-ink-soft">terdokumentasi lengkap</div>
+      </div>
+      <div class="stat-item text-center" data-stat-index="1">
+        <div class="counter font-display text-4xl sm:text-5xl lg:text-6xl font-medium text-sogan leading-none mb-2" data-target={stats.regions}>0</div>
+        <div class="stat-line w-0 h-px bg-gold mx-auto mb-2"></div>
+        <div class="stat-label text-xs sm:text-sm font-semibold text-ink mb-0.5">Daerah</div>
+        <div class="stat-label text-[0.7rem] sm:text-xs text-ink-soft">dari Aceh ke Bali</div>
+      </div>
+      <div class="stat-item text-center" data-stat-index="2">
+        <div class="counter font-display text-4xl sm:text-5xl lg:text-6xl font-medium text-sogan leading-none mb-2" data-target={stats.colors}>0</div>
+        <div class="stat-line w-0 h-px bg-gold mx-auto mb-2"></div>
+        <div class="stat-label text-xs sm:text-sm font-semibold text-ink mb-0.5">Token Warna</div>
+        <div class="stat-label text-[0.7rem] sm:text-xs text-ink-soft">berbasis filosofi</div>
+      </div>
+      <div class="stat-item text-center" data-stat-index="3">
+        <div class="counter font-display text-4xl sm:text-5xl lg:text-6xl font-medium text-sogan leading-none mb-2" data-target={stats.sources} data-suffix="+">0</div>
+        <div class="stat-line w-0 h-px bg-gold mx-auto mb-2"></div>
+        <div class="stat-label text-xs sm:text-sm font-semibold text-ink mb-0.5">Sumber</div>
+        <div class="stat-label text-[0.7rem] sm:text-xs text-ink-soft">Keraton, DJKI, Museum</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CSS untuk efek premium -->
+  <style is:global>
+    /* Initial state: invisible & translated down */
+    .stat-item {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .stat-item.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Label muncul belakangan (after count-up done) */
+    .stat-item .stat-label {
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .stat-item.is-done .stat-label {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Garis emas tumbuh dari 0 -> 32px */
+    .stat-item .stat-line {
+      transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .stat-item.is-done .stat-line {
+      width: 32px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .stat-item, .stat-item .stat-label, .stat-item .stat-line {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+        width: 32px !important;
+      }
+    }
+  </style>
+
+  <!-- Script animasi premium (stagger + count-up + reveal label) -->
+  <script is:inline>
+    (function() {
+      const items = document.querySelectorAll('.stat-item');
+      if (!items.length) return;
+
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function setFinalValue(el) {
+        const target = parseInt(el.dataset.target, 10);
+        const suffix = el.dataset.suffix || '';
+        el.textContent = target + suffix;
+      }
+
+      // Reduced motion: langsung tampilkan angka final
+      if (reducedMotion) {
+        items.forEach(item => {
+          item.classList.add('is-visible', 'is-done');
+          const counter = item.querySelector('.counter');
+          if (counter) setFinalValue(counter);
+        });
+        return;
+      }
+
+      function animateCount(el, duration = 1400) {
+        const target = parseInt(el.dataset.target, 10);
+        const suffix = el.dataset.suffix || '';
+        const start = performance.now();
+
+        return new Promise((resolve) => {
+          function step(now) {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            // easeOutCubic — cepat di awal, melambat di akhir
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const value = Math.round(target * eased);
+            el.textContent = value + suffix;
+            if (progress < 1) {
+              requestAnimationFrame(step);
+            } else {
+              el.textContent = target + suffix;
+              resolve();
+            }
+          }
+          requestAnimationFrame(step);
+        });
+      }
+
+      async function revealItem(item) {
+        // Step 1: fade-in dari bawah
+        item.classList.add('is-visible');
+        // Step 2: tunggu fade-in selesai cukup untuk count-up mulai (300ms)
+        await new Promise(r => setTimeout(r, 300));
+        // Step 3: count-up
+        const counter = item.querySelector('.counter');
+        if (counter) await animateCount(counter, 1400);
+        // Step 4: label & garis muncul
+        item.classList.add('is-done');
+      }
+
+      async function staggerReveal() {
+        // Stagger 250ms antar item — jadi total: 0, 250, 500, 750ms start
+        // Tiap item: 300ms fade + 1400ms count + 600ms label = 2300ms
+        // Total: 750 + 2300 = ~3050ms (cukup dramatic tapi gak lambat)
+        const STAGGER = 250;
+        for (let i = 0; i < items.length; i++) {
+          setTimeout(() => revealItem(items[i]), i * STAGGER);
+        }
+      }
+
+      // Trigger saat section masuk viewport (30% kelihatan)
+      let triggered = false;
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting && !triggered) {
+            triggered = true;
+            staggerReveal();
+            obs.disconnect();
+          }
+        });
+      }, { threshold: 0.3 });
+
+      const row = document.getElementById('statsRow');
+      if (row) obs.observe(row);
+    })();
+  </script>
+
+  <!-- KONTEN NARATIF -->
+  <section class="max-w-[760px] mx-auto px-5 sm:px-8 py-8 sm:py-12">
+    <p class="mb-6 text-ink-soft leading-relaxed">Batik telah diakui UNESCO sebagai warisan budaya tak benda kemanusiaan. Namun pengakuan dunia tidak otomatis menjaga maknanya tetap hidup. Banyak motif kini dikenal hanya sebagai pola yang indah — sementara filosofi, aturan pemakaian, dan kisah di baliknya perlahan terlupakan.</p>
+
+    <h2 class="text-2xl sm:text-3xl mt-10 mb-5">Mengapa kami membuat ini</h2>
+    <p class="mb-6 text-ink-soft leading-relaxed">Kami melihat bagaimana platform budaya kelas dunia — seperti arsip digital Europeana, atau cara Apple dan Kempinski menyajikan cerita — mampu membuat orang berhenti, memperhatikan, dan menghargai. Kekuatannya bukan pada banyaknya fitur, melainkan pada <strong class="text-ink">cara bercerita dan merawat detail.</strong></p>
+    <p class="mb-6 text-ink-soft leading-relaxed">Batikku membawa pendekatan itu ke batik: setiap motif tidak hanya ditampilkan, tapi <strong class="text-ink">dijelaskan</strong> — dari mana asalnya, apa maknanya, kapan dikenakan, dan oleh siapa.</p>
+
+    <h2 class="text-2xl sm:text-3xl mt-10 mb-5">Cara kami menyajikannya</h2>
+    <p class="mb-6 text-ink-soft leading-relaxed">Kami merancang pencarian yang relevan secara kultural. Pengguna bisa menelusuri motif lewat <strong class="text-ink">warna</strong> — karena warna dalam batik bukan sekadar estetika, melainkan pesan. Bisa juga lewat daerah, tema, konteks pemakaian, hingga status sosial pemakainya. Setiap jalan masuk adalah cara baru untuk memahami.</p>
+  </section>
+
+  <!-- MISI QUOTE -->
+  <section class="max-w-content mx-auto px-5 sm:px-8 lg:px-16 py-8">
+    <div class="bg-indigo-deep text-cream rounded-3xl p-8 sm:p-14 lg:p-20 text-center">
+      <p class="section-label text-gold justify-center inline-flex">◆ Misi Kami</p>
+      <blockquote class="font-display italic text-2xl sm:text-3xl lg:text-4xl leading-tight max-w-[26ch] mx-auto mt-4">"Membuat generasi muda tidak hanya melihat batik, tapi memahami percakapan di baliknya."</blockquote>
+    </div>
+  </section>
+
+  <!-- TIGA PILAR -->
+  <section class="max-w-[760px] mx-auto px-5 sm:px-8 py-10 pb-16">
+    <p class="section-label">◆ Tiga Pilar</p>
+    <h2 class="text-2xl sm:text-3xl">Yang kami pegang.</h2>
+    <div class="grid sm:grid-cols-3 gap-5 mt-8">
+      <div class="p-7 border border-line rounded-2xl bg-cream-soft">
+        <div class="font-display text-4xl text-gold leading-none mb-3">01</div>
+        <h3 class="font-display text-xl mb-2">Akurasi</h3>
+        <p class="text-sm text-ink-soft leading-relaxed">Konten bersumber dari literatur dan rujukan budaya yang dapat dipertanggungjawabkan.</p>
+      </div>
+      <div class="p-7 border border-line rounded-2xl bg-cream-soft">
+        <div class="font-display text-4xl text-gold leading-none mb-3">02</div>
+        <h3 class="font-display text-xl mb-2">Keindahan</h3>
+        <p class="text-sm text-ink-soft leading-relaxed">Kualitas presentasi yang setara dengan nilai warisan yang dirawat.</p>
+      </div>
+      <div class="p-7 border border-line rounded-2xl bg-cream-soft">
+        <div class="font-display text-4xl text-gold leading-none mb-3">03</div>
+        <h3 class="font-display text-xl mb-2">Keterjangkauan</h3>
+        <p class="text-sm text-ink-soft leading-relaxed">Mudah dijelajahi siapa saja, dari mana saja, dalam bahasa yang dekat.</p>
+      </div>
+    </div>
+  </section>
+
+</Layout>

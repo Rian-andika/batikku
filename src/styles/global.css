@@ -1,0 +1,174 @@
+/* =============================================================
+   GLOBAL STYLES
+   PENTING: @import HARUS di baris paling atas (sebelum @tailwind),
+   kalau tidak browser akan menolaknya (itu sebab warning kemarin).
+   ============================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..700&family=Hanken+Grotesk:wght@300..800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: theme('fontFamily.body');
+    color: theme('colors.ink.DEFAULT');
+    background: theme('colors.cream.DEFAULT');
+    line-height: 1.65;
+    font-size: 1.0625rem;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  h1, h2, h3 {
+    font-family: theme('fontFamily.display');
+    font-weight: 400;
+    line-height: 1.1;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-semibold
+           bg-sogan text-cream-soft transition-all hover:bg-sogan-deep hover:-translate-y-0.5;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-semibold
+           border-[1.5px] border-ink text-ink transition-all hover:bg-ink hover:text-cream;
+  }
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-xs font-semibold tracking-[0.18em] uppercase text-sogan;
+  }
+  .eyebrow::before {
+    content: ""; width: 32px; height: 1.5px;
+    @apply bg-sogan;
+  }
+  .section-label {
+    @apply text-xs font-semibold tracking-[0.18em] uppercase text-sogan mb-4;
+  }
+}
+
+.on-scroll { opacity: 0; transform: translateY(30px); transition: opacity .8s ease, transform .8s ease; }
+.on-scroll.visible { opacity: 1; transform: none; }
+
+/* === POLISH 1: Hero homepage — text muncul bertahap === */
+@keyframes hero-fadeup {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero-anim {
+  opacity: 0;
+  animation: hero-fadeup 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.hero-parang {
+  transition: transform 0.1s linear;
+  will-change: transform;
+  animation: hero-drift 18s ease-in-out infinite;
+}
+
+/* Pola hero bergerak pelan (A - kesan hidup) */
+@keyframes hero-drift {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-2.5%) translateX(-1.5%); }
+}
+
+/* === POLISH 2: Kartu motif — foto zoom-in halus saat hover === */
+article > div:first-child,
+a[href^="/motif/"] > div:first-child {
+  overflow: hidden;
+}
+article > div:first-child svg,
+article > div:first-child img,
+a[href^="/motif/"] > div:first-child svg,
+a[href^="/motif/"] > div:first-child img {
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+article:hover > div:first-child svg,
+article:hover > div:first-child img,
+a[href^="/motif/"]:hover > div:first-child svg,
+a[href^="/motif/"]:hover > div:first-child img {
+  transform: scale(1.06);
+}
+
+/* Subtle glow di border kartu saat hover */
+article {
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+article:hover {
+  box-shadow: 0 12px 30px rgba(123, 74, 43, 0.15), 0 0 0 1px rgba(201, 169, 97, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .on-scroll { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .hero-anim { animation: none !important; opacity: 1 !important; }
+  .hero-parang { transform: none !important; animation: none !important; }
+  article:hover > div:first-child svg,
+  article:hover > div:first-child img,
+  a[href^="/motif/"]:hover > div:first-child svg,
+  a[href^="/motif/"]:hover > div:first-child img { transform: none !important; }
+}
+
+/* === Initial load: anti-FOUC fade-in === */
+html.preload-ready body {
+  animation: page-fadein 0.4s ease-out;
+}
+@keyframes page-fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* === Loading shimmer untuk image yang sedang load === */
+img[loading="lazy"] {
+  background: linear-gradient(110deg, #ede3cc 30%, #f5eee1 50%, #ede3cc 70%);
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+img[loading="lazy"]:not([src=""]) {
+  animation: none;
+}
+@keyframes shimmer {
+  0% { background-position: -100% 0; }
+  100% { background-position: 200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  img[loading="lazy"] { animation: none; }
+}
+
+/* === Tab Metadata Akademik (modal halaman detail motif) === */
+.modal-tab {
+  color: rgba(31, 26, 21, 0.5);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.modal-tab:hover {
+  color: rgba(31, 26, 21, 0.8);
+}
+.modal-tab.active {
+  color: #1F1A15;
+}
+
+/* === MUSIC PLAYER: default bulat, detail muncul saat diklik === */
+#musicPlayer .player-details {
+  max-width: 0;
+  opacity: 0;
+  transition: max-width 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease 0.1s, padding 0.3s ease;
+  padding-right: 0 !important;
+}
+/* Detail HANYA muncul saat player di-klik/tap (data-state="open").
+   Tidak lagi auto-expand saat hover atau saat musik main —
+   jadi player tetap bulat sampai user sengaja membukanya. */
+#musicPlayer[data-state="open"] .player-details {
+  max-width: min(340px, calc(100vw - 96px));
+  opacity: 1;
+  padding-right: 1rem !important;
+}
+#musicPlayer[data-state="open"] .player-shell {
+  border-radius: 9999px;
+}
+/* Saat aktif (playing), tetap kasih subtle glow gold di tombol bulat */
+#musicPlayer[data-playing="1"] .player-shell {
+  box-shadow: 0 8px 32px rgba(201, 169, 97, 0.25), 0 0 0 1px rgba(201, 169, 97, 0.4);
+}

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Laporan Ekstraksi Warna</title>
+<style>
+body{font-family:system-ui,sans-serif;background:#f5eee1;padding:24px;color:#1f1a15;}
+h1{font-family:Georgia,serif;margin-bottom:8px;}
+.lead{color:#666;margin-bottom:24px;max-width:70ch;}
+table{border-collapse:collapse;width:100%;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+th,td{padding:12px;text-align:left;vertical-align:middle;border-bottom:1px solid #eee;}
+th{background:#7B4A2B;color:#fff;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:1px;}
+img{width:120px;height:120px;object-fit:cover;border-radius:8px;display:block;}
+.cluster-row,.token-row{display:flex;gap:4px;flex-wrap:wrap;}
+.csw{width:32px;height:32px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.2);}
+.tsw{padding:6px 12px;border-radius:20px;color:#fff;font-size:12px;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,0.4);display:flex;flex-direction:column;align-items:center;line-height:1.2;}
+.tsw .pct{font-size:10px;opacity:0.85;}
+.hint{font-size:11px;color:#999;margin-top:4px;}
+.code-cell{font-family:Consolas,Monaco,monospace;font-size:12px;background:#f5f5f5;}
+</style>
+</head><body>
+<h1>📊 Laporan Ekstraksi Warna — Verifikasi Manual</h1>
+<p class="lead">Tiap baris menunjukkan: foto motif, warna mentah hasil K-means clustering, token batik terdekat (kandidat untuk <code>colors</code>), dan kode siap-salin. Bandingkan kolom 2 (warna mentah) dengan kolom 3 (token). Kalau matching kelihatan keliru, kasih tau Claude motif mana yang perlu di-override.</p>
+<table>
+<thead><tr><th>Foto</th><th>ID</th><th>K-means Raw (6 cluster)</th><th>Token Batik Terdekat</th><th>Code</th></tr></thead>
+<tbody>
+        <tr>
+          <td><img src="public/images/motifs/aceh.jpg" /></td>
+          <td><strong>aceh</strong></td>
+          <td><div class="cluster-row"><div class="csw" style="background:#262b3a" title="#262b3a - 27%"></div><div class="csw" style="background:#3d4350" title="#3d4350 - 17%"></div><div class="csw" style="background:#606771" title="#606771 - 15%"></div><div class="csw" style="background:#8a9096" title="#8a9096 - 14%"></div><div class="csw" style="background:#b6bcbb" title="#b6bcbb - 14%"></div><div class="csw" style="background:#151a1c" title="#151a1c - 13%"></div></div><div class="hint">Warna mentah hasil K-means</div></td>
+          <td><div class="token-row"><div class="tsw" style="background:#1e3a5f">
+          <span>Indigo</span>
+          <span class="pct">44%</span>
+        </div><div class="tsw" style="background:#2c6e8f">
+          <span>Biru</span>
+          <span class="pct">29%</span>
+        </div><div class="tsw" style="background:#ede3cc">
+          <span>Gading</span>
+          <span class="pct">14%</span>
+        </div><div class="tsw" style="background:#1f1a15">
+          <span>Hitam</span>
+          <span class="pct">13%</span>
+        </div></div></td>
+          <td class="code-cell">colors: ["indigo", "biru", "gading", "hitam"]</td>
+        </tr>
+      
+        <tr>
+          <td><img src="public/images/motifs/betawi.jpg" /></td>
+          <td><strong>betawi</strong></td>
+          <td><div class="cluster-row"><div class="csw" style="background:#e1ad14" title="#e1ad14 - 53%"></div><div class="csw" style="background:#dcb760" title="#dcb760 - 13%"></div><div class="csw" style="background:#462142" title="#462142 - 10%"></div><div class="csw" style="background:#d1c6b5" title="#d1c6b5 - 9%"></div><div class="csw" style="background:#6e7499" title="#6e7499 - 9%"></div><div class="csw" style="background:#ee5955" title="#ee5955 - 7%"></div></div><div class="hint">Warna mentah hasil K-means</div></td>
+          <td><div class="token-row"><div class="tsw" style="background:#c9a961">
+          <span>Emas</span>
+          <span class="pct">65%</span>
+        </div><div class="tsw" style="background:#1e3a5f">
+          <span>Indigo</span>
+          <span class="pct">10%</span>
+        </div><div class="tsw" style="background:#ede3cc">
+          <span>Gading</span>
+          <span class="pct">9%</span>
+        </div><div class="tsw" style="background:#2c6e8f">
+          <span>Biru</span>
+          <span class="pct">9%</span>
+        </div></div></td>
+          <td class="code-cell">colors: ["emas", "indigo", "gading", "biru"]</td>
+        </tr>
+      
+        <tr>
+          <td><img src="public/images/motifs/ceplok.jpg" /></td>
+          <td><strong>ceplok</strong></td>
+          <td><div class="cluster-row"><div class="csw" style="background:#2a1d1c" title="#2a1d1c - 30%"></div><div class="csw" style="background:#512a20" title="#512a20 - 28%"></div><div class="csw" style="background:#e8d0bc" title="#e8d0bc - 13%"></div><div class="csw" style="background:#2e3642" title="#2e3642 - 10%"></div><div class="csw" style="background:#7f4f3e" title="#7f4f3e - 10%"></div><div class="csw" style="background:#b98f78" title="#b98f78 - 9%"></div></div><div class="hint">Warna mentah hasil K-means</div></td>
+          <td><div class="token-row"><div class="tsw" style="background:#7b4a2b">
+          <span>Sogan</span>
+          <span class="pct">38%</span>
+        </div><div class="tsw" style="background:#1f1a15">
+          <span>Hitam</span>
+          <span class="pct">30%</span>
+        </div><div class="tsw" style="background:#ede3cc">
+          <span>Gading</span>
+          <span class="pct">13%</span>
+        </div><div class="tsw" style="background:#1e3a5f">
+          <span>Indigo</span>
+          <span class="pct">10%</span>
+        </div></div></td>
+          <td class="code-cell">colors: ["sogan", "hitam", "gading", "indigo"]</td>
+        </tr>
+      
+        <tr>
+          <td><img src="public/images/motifs/kawung.jpg" /></td>
+          <td><strong>kawung</strong></td>
+          <td><div class="cluster-row"><div class="csw" style="background:#ead1ba" title="#ead1ba - 41%"></div><div class="csw" style="background:#352420" title="#352420 - 25%"></div><div class="csw" style="background:#6e3e2e" title="#6e3e2e - 12%"></div><div class="csw" style="background:#d3ac90" title="#d3ac90 - 10%"></div><div class="csw" style="background:#a6765e" title="#a6765e - 8%"></div><div class="csw" style="background:#f1f2f1" title="#f1f2f1 - 5%"></div></div><div class="hint">Warna mentah hasil K-means</div></td>
+          <td><div class="token-row"><div class="tsw" style="background:#ede3cc">
+          <span>Gading</span>
+          <span class="pct">56%</span>
+        </div><div class="tsw" style="background:#1f1a15">
+          <span>Hitam</span>
+          <span class="pct">25%</span>
+        </div><div class="tsw" style="background:#7b4a2b">
+          <span>Sogan</span>
+          <span class="pct">12%</span>
+        </div><div class="tsw" style="background:#9c5b3b">
+          <span>Terakota</span>
+          <span class="pct">8%</span>
+        </div></div></td>
+          <td class="code-cell">colors: ["gading", "hitam", "sogan", "terakota"]</td>
+        </tr>
+      
+        <tr>
+          <td><img src="public/images/motifs/megamendung.jpg" /></td>
+          <td><strong>megamendung</strong></td>
+          <td><div class="cluster-row"><div class="csw" style="background:#4c54b0" title="#4c54b0 - 26%"></div><div class="csw" style="background:#2d3d97" title="#2d3d97 - 22%"></div><div class="csw" style="background:#28263e" title="#28263e - 16%"></div><div class="csw" style="background:#b0b6c8" title="#b0b6c8 - 13%"></div><div class="csw" style="background:#7880b8" title="#7880b8 - 12%"></div><div class="csw" style="background:#e5dfdc" title="#e5dfdc - 11%"></div></div><div class="hint">Warna mentah hasil K-means</div></td>
+          <td><div class="token-row"><div class="tsw" style="background:#1e3a5f">
+          <span>Indigo</span>
+          <span class="pct">64%</span>
+        </div><div class="tsw" style="background:#ede3cc">
+          <span>Gading</span>
+          <span class="pct">24%</span>
+        </div><div class="tsw" style="background:#2c6e8f">
+          <span>Biru</span>
+          <span class="pct">12%</span>
+        </div></div></td>
+          <td class="code-cell">colors: ["indigo", "gading", "biru"]</td>
+        </tr>
+      
+        <tr>
+          <td><img src="public/images/motifs/parang.jpg" /></td>
+          <td><strong>parang</strong></td>
+          <td><div class="cluster-row"><div class="csw" style="background:#f0e2d0" title="#f0e2d0 - 24%"></div><div class="csw" style="background:#2b2424" title="#2b2424 - 19%"></div><div class="csw" style="background:#5d3d2e" title="#5d3d2e - 19%"></div><div class="csw" style="background:#876149" title="#876149 - 14%"></div><div class="csw" style="background:#dbc1a6" title="#dbc1a6 - 13%"></div><div class="csw" style="background:#b19176" title="#b19176 - 11%"></div></div><div class="hint">Warna mentah hasil K-means</div></td>
+          <td><div class="token-row"><div class="tsw" style="background:#ede3cc">
+          <span>Gading</span>
+          <span class="pct">38%</span>
+        </div><div class="tsw" style="background:#7b4a2b">
+          <span>Sogan</span>
+          <span class="pct">32%</span>
+        </div><div class="tsw" style="background:#1f1a15">
+          <span>Hitam</span>
+          <span class="pct">19%</span>
+        </div><div class="tsw" style="background:#c9a961">
+          <span>Emas</span>
+          <span class="pct">11%</span>
+        </div></div></td>
+          <td class="code-cell">colors: ["gading", "sogan", "hitam", "emas"]</td>
+        </tr>
+      
+        <tr>
+          <td><img src="public/images/motifs/polengbali.jpg" /></td>
+          <td><strong>polengbali</strong></td>
+          <td><div class="cluster-row"><div class="csw" style="background:#433e40" title="#433e40 - 39%"></div><div class="csw" style="background:#75574f" title="#75574f - 22%"></div><div class="csw" style="background:#e1dfd4" title="#e1dfd4 - 17%"></div><div class="csw" style="background:#f6f2e0" title="#f6f2e0 - 11%"></div><div class="csw" style="background:#d4c9bd" title="#d4c9bd - 6%"></div><div class="csw" style="background:#a5877b" title="#a5877b - 5%"></div></div><div class="hint">Warna mentah hasil K-means</div></td>
+          <td><div class="token-row"><div class="tsw" style="background:#1f1a15">
+          <span>Hitam</span>
+          <span class="pct">39%</span>
+        </div><div class="tsw" style="background:#ede3cc">
+          <span>Gading</span>
+          <span class="pct">34%</span>
+        </div><div class="tsw" style="background:#7b4a2b">
+          <span>Sogan</span>
+          <span class="pct">22%</span>
+        </div></div></td>
+          <td class="code-cell">colors: ["hitam", "gading", "sogan"]</td>
+        </tr>
+      
+        <tr>
+          <td><img src="public/images/motifs/sekarjagad.jpg" /></td>
+          <td><strong>sekarjagad</strong></td>
+          <td><div class="cluster-row"><div class="csw" style="background:#aa7556" title="#aa7556 - 23%"></div><div class="csw" style="background:#c99577" title="#c99577 - 23%"></div><div class="csw" style="background:#ddb099" title="#ddb099 - 17%"></div><div class="csw" style="background:#f6d3b7" title="#f6d3b7 - 16%"></div><div class="csw" style="background:#6a5e63" title="#6a5e63 - 12%"></div><div class="csw" style="background:#7f3c27" title="#7f3c27 - 9%"></div></div><div class="hint">Warna mentah hasil K-means</div></td>
+          <td><div class="token-row"><div class="tsw" style="background:#ede3cc">
+          <span>Gading</span>
+          <span class="pct">33%</span>
+        </div><div class="tsw" style="background:#9c5b3b">
+          <span>Terakota</span>
+          <span class="pct">23%</span>
+        </div><div class="tsw" style="background:#c9a961">
+          <span>Emas</span>
+          <span class="pct">23%</span>
+        </div><div class="tsw" style="background:#2c6e8f">
+          <span>Biru</span>
+          <span class="pct">12%</span>
+        </div></div></td>
+          <td class="code-cell">colors: ["gading", "terakota", "emas", "biru"]</td>
+        </tr>
+      
+        <tr>
+          <td><img src="public/images/motifs/shaho.jpg" /></td>
+          <td><strong>shaho</strong></td>
+          <td><div class="cluster-row"><div class="csw" style="background:#881024" title="#881024 - 36%"></div><div class="csw" style="background:#902342" title="#902342 - 21%"></div><div class="csw" style="background:#b29381" title="#b29381 - 13%"></div><div class="csw" style="background:#c0bcba" title="#c0bcba - 10%"></div><div class="csw" style="background:#9f6069" title="#9f6069 - 10%"></div><div class="csw" style="background:#a05f38" title="#a05f38 - 9%"></div></div><div class="hint">Warna mentah hasil K-means</div></td>
+          <td><div class="token-row"><div class="tsw" style="background:#a0341e">
+          <span>Merah</span>
+          <span class="pct">57%</span>
+        </div><div class="tsw" style="background:#9c5b3b">
+          <span>Terakota</span>
+          <span class="pct">32%</span>
+        </div><div class="tsw" style="background:#ede3cc">
+          <span>Gading</span>
+          <span class="pct">10%</span>
+        </div></div></td>
+          <td class="code-cell">colors: ["merah", "terakota", "gading"]</td>
+        </tr>
+      
+        <tr>
+          <td><img src="public/images/motifs/sidomukti.jpg" /></td>
+          <td><strong>sidomukti</strong></td>
+          <td><div class="cluster-row"><div class="csw" style="background:#c2906d" title="#c2906d - 26%"></div><div class="csw" style="background:#9e6e4e" title="#9e6e4e - 25%"></div><div class="csw" style="background:#784b30" title="#784b30 - 18%"></div><div class="csw" style="background:#e3bb95" title="#e3bb95 - 15%"></div><div class="csw" style="background:#3e2c27" title="#3e2c27 - 11%"></div><div class="csw" style="background:#645c61" title="#645c61 - 6%"></div></div><div class="hint">Warna mentah hasil K-means</div></td>
+          <td><div class="token-row"><div class="tsw" style="background:#c9a961">
+          <span>Emas</span>
+          <span class="pct">40%</span>
+        </div><div class="tsw" style="background:#9c5b3b">
+          <span>Terakota</span>
+          <span class="pct">25%</span>
+        </div><div class="tsw" style="background:#7b4a2b">
+          <span>Sogan</span>
+          <span class="pct">18%</span>
+        </div><div class="tsw" style="background:#1f1a15">
+          <span>Hitam</span>
+          <span class="pct">11%</span>
+        </div></div></td>
+          <td class="code-cell">colors: ["emas", "terakota", "sogan", "hitam"]</td>
+        </tr>
+      
+        <tr>
+          <td><img src="public/images/motifs/simbut.jpg" /></td>
+          <td><strong>simbut</strong></td>
+          <td><div class="cluster-row"><div class="csw" style="background:#7a2f22" title="#7a2f22 - 38%"></div><div class="csw" style="background:#13262b" title="#13262b - 27%"></div><div class="csw" style="background:#f6f5f4" title="#f6f5f4 - 12%"></div><div class="csw" style="background:#866863" title="#866863 - 9%"></div><div class="csw" style="background:#bcaeab" title="#bcaeab - 7%"></div><div class="csw" style="background:#06191f" title="#06191f - 7%"></div></div><div class="hint">Warna mentah hasil K-means</div></td>
+          <td><div class="token-row"><div class="tsw" style="background:#7b4a2b">
+          <span>Sogan</span>
+          <span class="pct">46%</span>
+        </div><div class="tsw" style="background:#1f1a15">
+          <span>Hitam</span>
+          <span class="pct">34%</span>
+        </div><div class="tsw" style="background:#ede3cc">
+          <span>Gading</span>
+          <span class="pct">19%</span>
+        </div></div></td>
+          <td class="code-cell">colors: ["sogan", "hitam", "gading"]</td>
+        </tr>
+      
+        <tr>
+          <td><img src="public/images/motifs/truntum.jpg" /></td>
+          <td><strong>truntum</strong></td>
+          <td><div class="cluster-row"><div class="csw" style="background:#22242c" title="#22242c - 53%"></div><div class="csw" style="background:#2e354c" title="#2e354c - 22%"></div><div class="csw" style="background:#564321" title="#564321 - 8%"></div><div class="csw" style="background:#8f6a27" title="#8f6a27 - 7%"></div><div class="csw" style="background:#e5e8c8" title="#e5e8c8 - 5%"></div><div class="csw" style="background:#b7a849" title="#b7a849 - 4%"></div></div><div class="hint">Warna mentah hasil K-means</div></td>
+          <td><div class="token-row"><div class="tsw" style="background:#1f1a15">
+          <span>Hitam</span>
+          <span class="pct">53%</span>
+        </div><div class="tsw" style="background:#1e3a5f">
+          <span>Indigo</span>
+          <span class="pct">22%</span>
+        </div><div class="tsw" style="background:#7b4a2b">
+          <span>Sogan</span>
+          <span class="pct">8%</span>
+        </div></div></td>
+          <td class="code-cell">colors: ["hitam", "indigo", "sogan"]</td>
+        </tr>
+      </tbody>
+</table>
+<script>
+// Image fallback jika path-relative gak jalan
+document.querySelectorAll('img').forEach(img=>{
+  img.onerror=()=>{img.style.display='none';img.insertAdjacentHTML('afterend','<div style="width:120px;height:120px;background:#eee;display:flex;align-items:center;justify-content:center;border-radius:8px;color:#999;font-size:11px;text-align:center;padding:8px;">Foto tidak ditemukan<br/>('+img.getAttribute('src')+')</div>');};
+});
+</script>
+</body></html>

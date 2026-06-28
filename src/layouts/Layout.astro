@@ -1,0 +1,328 @@
+---
+// ====================================================
+// LAYOUT.ASTRO — template yang dipakai semua halaman
+// Bagian antara --- ini namanya "frontmatter":
+// ditulis pakai JavaScript, dijalankan saat build.
+// ====================================================
+
+import '../styles/global.css';
+
+// Props yang bisa diset tiap halaman (judul tab browser)
+const { title = "Batikku — Bahasa Hidup di Balik Batik", description = "Membaca makna simbolik motif batik Indonesia." } = Astro.props;
+
+// Cek halaman aktif untuk highlight nav
+const path = Astro.url.pathname;
+const isActive = (href) => path === href || (href !== '/' && path.startsWith(href));
+---
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+</head>
+<body>
+
+  <!-- ============ HEADER (sama di semua halaman) ============ -->
+  <header class="sticky top-0 z-50 backdrop-blur-md bg-cream/80 border-b border-line">
+    <div class="max-w-content mx-auto px-5 sm:px-8 lg:px-16">
+      <div class="flex items-center justify-between h-[72px]">
+        <a href="/" class="font-display text-2xl font-medium flex items-center gap-2.5">
+          <span class="w-2.5 h-2.5 bg-sogan rounded-full"></span>
+          Batikku
+        </a>
+        <nav class="hidden md:flex gap-8 text-[0.95rem] font-medium">
+          <a href="/catalog" class={`hover:text-sogan transition ${isActive('/catalog') ? 'text-sogan' : ''}`}>Katalog</a>
+          <a href="/map" class={`hover:text-sogan transition ${isActive('/map') ? 'text-sogan' : ''}`}>Peta</a>
+          <a href="/scan" class={`hover:text-sogan transition flex items-center gap-1 ${isActive('/scan') ? 'text-sogan' : ''}`}>
+            Scan
+            <span class="text-[0.6rem] px-1.5 py-0.5 rounded-full bg-sogan/15 text-sogan font-bold leading-none">AI</span>
+          </a>
+          <a href="/about" class={`hover:text-sogan transition ${isActive('/about') ? 'text-sogan' : ''}`}>Filosofi</a>
+        </nav>
+        <a href="/scan" class="hidden md:inline-block text-sm font-semibold py-2 px-5 border-[1.5px] border-ink rounded-full hover:bg-ink hover:text-cream transition">Coba AI Scanner</a>
+
+        <!-- Tombol hamburger (mobile saja) -->
+        <button id="menuToggle" class="md:hidden w-10 h-10 grid place-items-center rounded-full hover:bg-ink/5 transition" aria-label="Buka menu" aria-expanded="false">
+          <svg id="iconMenu" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <svg id="iconClose" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="hidden"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Panel menu mobile (slide down) -->
+    <div id="mobileMenu" class="md:hidden hidden border-t border-line bg-cream/95 backdrop-blur-md">
+      <nav class="max-w-content mx-auto px-5 py-4 flex flex-col gap-1 text-base font-medium">
+        <a href="/catalog" class={`py-3 px-3 rounded-xl hover:bg-sogan/8 transition ${isActive('/catalog') ? 'text-sogan bg-sogan/5' : ''}`}>Katalog</a>
+        <a href="/map" class={`py-3 px-3 rounded-xl hover:bg-sogan/8 transition ${isActive('/map') ? 'text-sogan bg-sogan/5' : ''}`}>Peta</a>
+        <a href="/scan" class={`py-3 px-3 rounded-xl hover:bg-sogan/8 transition flex items-center gap-2 ${isActive('/scan') ? 'text-sogan bg-sogan/5' : ''}`}>
+          Scan
+          <span class="text-[0.6rem] px-1.5 py-0.5 rounded-full bg-sogan/15 text-sogan font-bold leading-none">AI</span>
+        </a>
+        <a href="/about" class={`py-3 px-3 rounded-xl hover:bg-sogan/8 transition ${isActive('/about') ? 'text-sogan bg-sogan/5' : ''}`}>Filosofi</a>
+        <a href="/scan" class="mt-2 text-center text-sm font-semibold py-3 px-5 bg-ink text-cream rounded-full hover:bg-sogan transition">Coba AI Scanner</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Isi halaman ditaruh di sini lewat <slot /> -->
+  <slot />
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="bg-ink text-cream/70 py-12 mt-16 text-sm">
+    <div class="max-w-content mx-auto px-5 sm:px-8 lg:px-16">
+      <div class="flex justify-between items-center flex-wrap gap-4">
+        <a href="/" class="font-display text-xl font-medium flex items-center gap-2.5 text-cream">
+          <span class="w-2.5 h-2.5 bg-gold rounded-full"></span>
+          Batikku
+        </a>
+        <span>Proyek Culture Preservation Technology · 2026</span>
+      </div>
+      <p class="text-cream/40 text-xs mt-6 max-w-[70ch] leading-relaxed">
+        Informasi motif disusun dari berbagai sumber tepercaya (tercantum pada tiap halaman motif) untuk tujuan edukasi dan pelestarian budaya. Kami terbuka terhadap koreksi demi akurasi.
+      </p>
+    </div>
+  </footer>
+
+  <!-- ============ MUSIC PLAYER (kompak + expand saat hover) ============ -->
+  <!-- Beda musik per halaman, ditentukan dari URL. State diingat antar halaman lewat sessionStorage. -->
+  <div id="musicPlayer" class="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-40 select-none" data-state="collapsed">
+    <div class="player-shell bg-ink/95 backdrop-blur-md text-cream rounded-full shadow-2xl border border-gold/30 overflow-hidden flex items-center transition-all duration-300 ease-out">
+      <!-- Tombol Play/Pause (selalu kelihatan) -->
+      <button id="musicToggle" class="w-12 h-12 flex-shrink-0 grid place-items-center rounded-full hover:bg-gold/20 transition" aria-label="Putar musik">
+        <!-- Icon Note (state: paused) -->
+        <svg id="iconPlay" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
+        <!-- Icon Pause (state: playing, hidden default) -->
+        <svg id="iconPause" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="hidden"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+      </button>
+      <!-- Detail player (expand saat hover) -->
+      <div class="player-details overflow-hidden flex items-center gap-3 pr-4">
+        <div class="min-w-0">
+          <p class="text-[0.65rem] uppercase tracking-[0.12em] text-gold/80 font-bold">Sedang Diputar</p>
+          <p id="musicTitle" class="text-xs whitespace-nowrap text-cream truncate max-w-[180px]">—</p>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button id="musicVolDown" class="w-7 h-7 grid place-items-center text-cream/70 hover:text-cream transition" aria-label="Volume turun">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 9v6h4l5 5V4l-5 5H7z"/></svg>
+          </button>
+          <div class="w-14 h-1 rounded-full bg-cream/20 overflow-hidden">
+            <div id="volBar" class="h-full bg-gold transition-all" style="width: 40%"></div>
+          </div>
+          <button id="musicVolUp" class="w-7 h-7 grid place-items-center text-cream/70 hover:text-cream transition" aria-label="Volume naik">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-3.99zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77S18.01 4.14 14 3.23z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <audio id="bgAudio" loop preload="metadata"></audio>
+  </div>
+
+  <!-- Script animasi scroll universal -->
+  <script>
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          obs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.on-scroll').forEach((el) => obs.observe(el));
+  </script>
+
+  <!-- Script Mobile Menu -->
+  <script is:inline>
+    (function() {
+      const toggle = document.getElementById('menuToggle');
+      const menu = document.getElementById('mobileMenu');
+      const iconMenu = document.getElementById('iconMenu');
+      const iconClose = document.getElementById('iconClose');
+      if (!toggle || !menu) return;
+
+      function setOpen(open) {
+        menu.classList.toggle('hidden', !open);
+        iconMenu.classList.toggle('hidden', open);
+        iconClose.classList.toggle('hidden', !open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        toggle.setAttribute('aria-label', open ? 'Tutup menu' : 'Buka menu');
+      }
+      toggle.addEventListener('click', () => setOpen(menu.classList.contains('hidden')));
+      menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setOpen(false)));
+      window.addEventListener('resize', () => { if (window.innerWidth >= 768) setOpen(false); });
+    })();
+  </script>
+
+  <!-- Script Music Player -->
+  <script is:inline>
+    (function() {
+      // === KONFIG MUSIK ===
+      // Satu lagu Gamelan untuk semua halaman.
+      const MUSIC = { src: '/audio/home.mp3', title: 'Gamelan' };
+
+      const audio    = document.getElementById('bgAudio');
+      const btn      = document.getElementById('musicToggle');
+      const iconPlay = document.getElementById('iconPlay');
+      const iconPause= document.getElementById('iconPause');
+      const titleEl  = document.getElementById('musicTitle');
+      const volBar   = document.getElementById('volBar');
+      const btnDown  = document.getElementById('musicVolDown');
+      const btnUp    = document.getElementById('musicVolUp');
+      const player   = document.getElementById('musicPlayer');
+
+      // === Restore state dari sessionStorage ===
+      // music:on    -> '1' kalau user mengizinkan musik (atau belum pernah mematikan)
+      // music:vol   -> volume terakhir
+      // music:time  -> posisi detik terakhir (biar lanjut antar halaman)
+      const savedVol  = parseFloat(sessionStorage.getItem('music:vol') || '0.4');
+      const savedTime = parseFloat(sessionStorage.getItem('music:time') || '0');
+      // Default ON: kecuali user pernah klik pause (music:on === '0')
+      const musicOn   = sessionStorage.getItem('music:on') !== '0';
+
+      audio.src = MUSIC.src;
+      audio.volume = Math.max(0, Math.min(1, savedVol));
+      volBar.style.width = (audio.volume * 100) + '%';
+      titleEl.textContent = MUSIC.title;
+
+      // Lanjutkan dari posisi terakhir (sambungan antar halaman)
+      audio.addEventListener('loadedmetadata', () => {
+        if (savedTime > 0 && savedTime < audio.duration) {
+          try { audio.currentTime = savedTime; } catch (e) {}
+        }
+      });
+
+      // Simpan posisi musik berkala (biar halaman berikutnya bisa lanjut)
+      setInterval(() => {
+        if (!audio.paused && audio.currentTime > 0) {
+          sessionStorage.setItem('music:time', String(audio.currentTime));
+        }
+      }, 1000);
+      window.addEventListener('beforeunload', () => {
+        if (!audio.paused) sessionStorage.setItem('music:time', String(audio.currentTime));
+      });
+
+      function updateIcon() {
+        // Icon pause HANYA muncul saat musik main DAN detail terbuka.
+        // Selain itu (termasuk main tapi tertutup) → selalu note musik.
+        const isPlaying = player.dataset.playing === '1';
+        const isOpen = player.dataset.state === 'open';
+        if (isPlaying && isOpen) {
+          iconPlay.classList.add('hidden');
+          iconPause.classList.remove('hidden');
+        } else {
+          iconPlay.classList.remove('hidden');
+          iconPause.classList.add('hidden');
+        }
+      }
+
+      function setPlayingUI(isPlaying) {
+        player.dataset.playing = isPlaying ? '1' : '0';
+        btn.setAttribute('aria-label', isPlaying ? 'Jeda musik' : 'Putar musik');
+        updateIcon();
+      }
+
+      // Update icon tiap kali state buka/tutup berubah (pakai observer)
+      const stateObserver = new MutationObserver(updateIcon);
+      stateObserver.observe(player, { attributes: true, attributeFilter: ['data-state'] });
+
+      function tryPlay() {
+        return audio.play().then(() => {
+          setPlayingUI(true);
+          sessionStorage.setItem('music:on', '1');
+        }).catch(() => {
+          // Browser blokir (belum ada interaksi user) — tunggu klik pertama
+          setPlayingUI(false);
+        });
+      }
+
+      // === AUTO-PLAY SETELAH INTERAKSI PERTAMA ===
+      // Browser memblokir audio sebelum user berinteraksi. Jadi kita pasang
+      // listener sekali-pakai: begitu user klik / scroll / pencet tombol di
+      // mana saja, kalau musik memang "on", langsung mainkan.
+      let armed = false;
+      function armAutoplay() {
+        if (armed) return;
+        armed = true;
+        if (musicOn && audio.paused) {
+          tryPlay();
+        }
+        // Lepas listener setelah dipakai sekali
+        window.removeEventListener('pointerdown', armAutoplay);
+        window.removeEventListener('keydown', armAutoplay);
+        window.removeEventListener('scroll', armAutoplay);
+        window.removeEventListener('touchstart', armAutoplay);
+      }
+
+      // Coba langsung dulu (kadang browser izinkan kalau user sudah pernah
+      // berinteraksi di sesi yang sama / pindah halaman)
+      if (musicOn) {
+        tryPlay().then(() => {
+          // Kalau masih ke-pause (diblokir), pasang listener interaksi
+          if (audio.paused) {
+            window.addEventListener('pointerdown', armAutoplay, { once: false });
+            window.addEventListener('keydown', armAutoplay, { once: false });
+            window.addEventListener('scroll', armAutoplay, { once: false, passive: true });
+            window.addEventListener('touchstart', armAutoplay, { once: false, passive: true });
+          }
+        });
+      } else {
+        setPlayingUI(false);
+      }
+
+      // === Tombol play/pause + buka detail ===
+      // Klik tombol musik: kalau mati → nyalakan + buka detail.
+      //                    kalau main → matikan + tutup detail.
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (audio.paused) {
+          audio.play().then(() => {
+            setPlayingUI(true);
+            sessionStorage.setItem('music:on', '1');
+            player.dataset.state = 'open'; // tampilkan detail saat mulai main
+          }).catch((e) => {
+            titleEl.textContent = 'File musik tidak ditemukan';
+            setPlayingUI(false);
+          });
+        } else {
+          audio.pause();
+          setPlayingUI(false);
+          sessionStorage.setItem('music:on', '0');
+          player.dataset.state = 'collapsed'; // balik jadi bulat
+        }
+      });
+
+      function changeVol(delta) {
+        audio.volume = Math.max(0, Math.min(1, audio.volume + delta));
+        volBar.style.width = (audio.volume * 100) + '%';
+        sessionStorage.setItem('music:vol', String(audio.volume));
+      }
+      btnDown.addEventListener('click', (e) => { e.stopPropagation(); changeVol(-0.15); });
+      btnUp.addEventListener('click', (e) => { e.stopPropagation(); changeVol(0.15); });
+
+      // Kalau file gagal load
+      audio.addEventListener('error', () => {
+        titleEl.textContent = 'File musik tidak ditemukan';
+        setPlayingUI(false);
+      });
+
+      // === Buka/tutup detail dengan klik di area player (semua layar) ===
+      // Klik di shell (bukan tombol kontrol) → toggle detail buka/tutup.
+      const shell = player.querySelector('.player-shell');
+      if (shell) {
+        shell.addEventListener('click', (e) => {
+          if (e.target.closest('#musicToggle, #musicVolDown, #musicVolUp')) return;
+          const isOpen = player.dataset.state === 'open';
+          player.dataset.state = isOpen ? 'collapsed' : 'open';
+        });
+      }
+      // Klik di luar player → tutup detail (balik jadi bulat)
+      document.addEventListener('click', (e) => {
+        if (!player.contains(e.target)) player.dataset.state = 'collapsed';
+      });
+
+    })();
+  </script>
+</body>
+</html>

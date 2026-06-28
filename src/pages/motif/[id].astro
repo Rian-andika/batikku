@@ -1,0 +1,378 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { MOTIFS, COLOR_TOKENS, visualMotif } from '../../data/motifs.js';
+
+// ===== DYNAMIC ROUTING ASTRO =====
+// getStaticPaths() = fungsi yang ngasih tau Astro halaman apa aja yang harus dibuat
+// Astro akan generate: /motif/parang, /motif/kawung, /motif/megamendung, dst.
+export async function getStaticPaths() {
+  return MOTIFS.map((motif) => ({
+    params: { id: motif.id },
+    props: { motif },
+  }));
+}
+
+const { motif } = Astro.props;
+
+// Cari motif serupa (skor kemiripan)
+const similar = MOTIFS
+  .filter(x => x.id !== motif.id)
+  .map(x => {
+    let score = 0;
+    if (x.region === motif.region) score += 2;
+    score += x.colors.filter(c => motif.colors.includes(c)).length;
+    score += x.themes.filter(t => motif.themes.includes(t)).length;
+    return { motif: x, score };
+  })
+  .sort((a, b) => b.score - a.score)
+  .slice(0, 3)
+  .map(s => s.motif);
+
+// Helper: paragraf dengan fallback
+const para = (txt) => (txt && txt.trim())
+  ? txt.trim().split(/\n\n+/).map(p => `<p>${p}</p>`).join('')
+  : `<p class="italic text-ink-soft/70">Bagian ini sedang dilengkapi oleh tim riset.</p>`;
+---
+
+<Layout title={`${motif.name} — Batikku`}>
+
+  <div class="max-w-content mx-auto px-5 sm:px-8 lg:px-16 pt-7 text-sm text-ink-soft">
+    <a href="/" class="hover:text-sogan">Beranda</a> /
+    <a href="/catalog" class="hover:text-sogan">Katalog</a> / {motif.name}
+  </div>
+
+  <!-- HERO DETAIL -->
+  <div class="max-w-content mx-auto px-5 sm:px-8 lg:px-16 grid lg:grid-cols-[0.85fr_1.15fr] gap-8 lg:gap-16 items-center py-8 sm:py-14">
+    <div class="rounded-3xl overflow-hidden shadow-2xl aspect-[4/5]" set:html={visualMotif(motif)} />
+    <div>
+      <span class="inline-flex items-center gap-2 text-[0.85rem] font-semibold tracking-[0.14em] uppercase text-sogan mb-4">◆ {motif.region}</span>
+      <h1 class="text-4xl sm:text-6xl lg:text-7xl tracking-tight mb-5">{motif.name}</h1>
+      <p class="text-lg sm:text-xl text-ink-soft max-w-[48ch]">{motif.summary}</p>
+
+      <div class="flex flex-wrap gap-2.5 mt-8">
+        <div class="inline-flex flex-col gap-0.5 px-4 py-2.5 bg-cream-soft border border-line rounded-xl">
+          <span class="text-[0.68rem] font-bold tracking-[0.08em] uppercase text-ink-soft">Tema</span>
+          <span class="text-[0.92rem] font-semibold text-ink">{motif.themes.join(', ')}</span>
+        </div>
+        <div class="inline-flex flex-col gap-0.5 px-4 py-2.5 bg-cream-soft border border-line rounded-xl">
+          <span class="text-[0.68rem] font-bold tracking-[0.08em] uppercase text-ink-soft">Konteks</span>
+          <span class="text-[0.92rem] font-semibold text-ink">{motif.contexts.join(', ')}</span>
+        </div>
+        <div class="inline-flex flex-col gap-0.5 px-4 py-2.5 bg-cream-soft border border-line rounded-xl">
+          <span class="text-[0.68rem] font-bold tracking-[0.08em] uppercase text-ink-soft">Pemakai</span>
+          <span class="text-[0.92rem] font-semibold text-ink">{motif.wearer}</span>
+        </div>
+        <div class="inline-flex flex-col gap-0.5 px-4 py-2.5 bg-cream-soft border border-line rounded-xl">
+          <span class="text-[0.68rem] font-bold tracking-[0.08em] uppercase text-ink-soft">Teknik</span>
+          <span class="text-[0.92rem] font-semibold text-ink">{motif.technique}</span>
+        </div>
+        <div class="inline-flex flex-col gap-0.5 px-4 py-2.5 bg-cream-soft border border-line rounded-xl">
+          <span class="text-[0.68rem] font-bold tracking-[0.08em] uppercase text-ink-soft">Era</span>
+          <span class="text-[0.92rem] font-semibold text-ink">{motif.era}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILOSOFI -->
+  <section class="max-w-content mx-auto px-5 sm:px-8 lg:px-16 py-10">
+    <div class="bg-indigo-deep text-cream rounded-3xl p-8 sm:p-14 lg:p-20 text-center on-scroll">
+      <p class="section-label text-gold">Filosofi</p>
+      <blockquote class="font-display italic text-2xl sm:text-4xl leading-tight max-w-[24ch] mx-auto">
+        {motif.philosophy && motif.philosophy.trim() ? `"${motif.philosophy}"` : 'Filosofi motif ini sedang dilengkapi tim riset.'}
+      </blockquote>
+    </div>
+  </section>
+
+  <!-- ASAL + PENGGUNAAN -->
+  <section class="max-w-content mx-auto px-5 sm:px-8 lg:px-16 py-10 grid md:grid-cols-2 gap-10 lg:gap-16">
+    <div class="on-scroll">
+      <p class="section-label">Asal & Sejarah</p>
+      <h2 class="text-2xl sm:text-3xl mb-4">Dari mana motif ini berasal?</h2>
+      <div class="text-ink-soft space-y-4 [&>p]:max-w-[52ch]" set:html={para(motif.history)} />
+    </div>
+    <div class="on-scroll">
+      <p class="section-label">Penggunaan Tradisional</p>
+      <h2 class="text-2xl sm:text-3xl mb-4">Kapan dikenakan?</h2>
+      <div class="text-ink-soft space-y-4 [&>p]:max-w-[52ch]" set:html={para(motif.usage)} />
+    </div>
+  </section>
+
+  <!-- PEMBEDAHAN VISUAL -->
+  <section class="max-w-content mx-auto px-5 sm:px-8 lg:px-16 py-10">
+    <div class="bg-cream-soft border border-line rounded-3xl p-8 sm:p-14 on-scroll">
+      <p class="section-label">Pembedahan Visual</p>
+      <h2 class="text-2xl sm:text-3xl mb-6">Membaca elemen motif</h2>
+      <div class="text-ink-soft space-y-4" set:html={para(motif.visual)} />
+    </div>
+  </section>
+
+  <!-- WARNA & MAKNA -->
+  <section class="max-w-content mx-auto px-5 sm:px-8 lg:px-16 py-10">
+    <div class="bg-cream-soft border border-line rounded-3xl p-8 sm:p-14 on-scroll">
+      <p class="section-label">Warna & Maknanya</p>
+      <h2 class="text-2xl sm:text-3xl mb-8">Palet yang berbicara</h2>
+      <div class="flex flex-col gap-5">
+        {motif.colors.map(c => {
+          const t = COLOR_TOKENS[c];
+          return (
+            <div class="flex items-center gap-5">
+              <div class="w-[52px] h-[52px] rounded-xl flex-shrink-0 border border-black/10" style={`background:${t.hex}`}></div>
+              <div>
+                <strong class="block font-display text-xl">{t.label}</strong>
+                <span class="text-[0.95rem] text-ink-soft">{t.meaning}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+
+  <!-- SOURCES -->
+  {motif.sources && motif.sources.length > 0 && (
+    <section class="max-w-content mx-auto px-5 sm:px-8 lg:px-16 py-10">
+      <div class="bg-cream-soft border border-line rounded-3xl p-8 sm:p-14 on-scroll">
+        <p class="section-label">Sumber Rujukan</p>
+        <h2 class="text-2xl sm:text-3xl mb-4">Dari mana informasi ini?</h2>
+        <ul class="list-disc pl-6 leading-loose">
+          {motif.sources.map(s => (
+            <li>{s.url ? <a href={s.url} target="_blank" rel="noopener" class="text-sogan underline">{s.label} ↗</a> : s.label}</li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  <!-- ============ PAKEM & FILOSOFI LOKAL (Pradata sebagai cerita) ============ -->
+  {motif.pradata && (
+    <section class="max-w-content mx-auto px-5 sm:px-8 lg:px-16 py-10 sm:py-14">
+      <div class="on-scroll">
+        <p class="section-label">Pakem & Filosofi Lokal</p>
+        <h2 class="text-3xl sm:text-5xl mb-3">Yang tak terkatakan oleh kamus.</h2>
+        <p class="text-ink-soft max-w-[60ch] mb-10">Setiap motif batik dijaga oleh sistem aturan tak tertulis — pakem, simbol, pantangan, dan falsafah. Berikut struktur metadata lokal yang tak ketangkap di standar global.</p>
+
+        <div class="grid md:grid-cols-2 gap-4 sm:gap-5">
+          {motif.pradata.pakem && (
+            <div class="bg-cream-soft border border-line rounded-2xl p-6 sm:p-7">
+              <p class="text-[0.7rem] font-bold tracking-[0.15em] uppercase text-sogan mb-2">◆ Pakem</p>
+              <h3 class="font-display text-lg mb-2.5">Aturan tradisional</h3>
+              <p class="text-ink-soft leading-relaxed">{motif.pradata.pakem}</p>
+            </div>
+          )}
+          {motif.pradata.simbol && (
+            <div class="bg-cream-soft border border-line rounded-2xl p-6 sm:p-7">
+              <p class="text-[0.7rem] font-bold tracking-[0.15em] uppercase text-sogan mb-2">◆ Simbol</p>
+              <h3 class="font-display text-lg mb-2.5">Arti visualnya</h3>
+              <p class="text-ink-soft leading-relaxed">{motif.pradata.simbol}</p>
+            </div>
+          )}
+          {motif.pradata.konteks && (
+            <div class="bg-cream-soft border border-line rounded-2xl p-6 sm:p-7">
+              <p class="text-[0.7rem] font-bold tracking-[0.15em] uppercase text-sogan mb-2">◆ Konteks</p>
+              <h3 class="font-display text-lg mb-2.5">Kapan dipakai</h3>
+              <p class="text-ink-soft leading-relaxed">{motif.pradata.konteks}</p>
+            </div>
+          )}
+          {motif.pradata.pantangan && (
+            <div class="bg-cream-soft border border-line rounded-2xl p-6 sm:p-7">
+              <p class="text-[0.7rem] font-bold tracking-[0.15em] uppercase text-sogan mb-2">◆ Pantangan</p>
+              <h3 class="font-display text-lg mb-2.5">Yang dihindari</h3>
+              <p class="text-ink-soft leading-relaxed">{motif.pradata.pantangan}</p>
+            </div>
+          )}
+          {motif.pradata.falsafah && (
+            <div class="bg-indigo-deep text-cream-soft rounded-2xl p-6 sm:p-7 md:col-span-2 relative overflow-hidden">
+              <div class="absolute -right-4 -top-4 text-9xl text-gold/15 font-serif leading-none select-none pointer-events-none">"</div>
+              <p class="text-[0.7rem] font-bold tracking-[0.15em] uppercase text-gold mb-2 relative">◆ Falsafah</p>
+              <h3 class="font-display text-xl text-cream mb-3 relative">Pesan yang tersirat</h3>
+              <p class="text-cream/95 leading-relaxed text-lg relative">{motif.pradata.falsafah}</p>
+            </div>
+          )}
+        </div>
+
+        <!-- Tombol Akademik -->
+        <div class="mt-8 flex flex-wrap gap-3 items-center">
+          <button id="openMetaModal" class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-ink/5 hover:bg-ink/10 border border-line text-sm font-semibold transition">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/></svg>
+            Lihat Metadata Akademik
+          </button>
+          <span class="text-xs text-ink-soft/70 italic">Dublin Core · CIDOC CRM · Knowledge Graph</span>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- ============ MODAL METADATA AKADEMIK ============ -->
+  <div id="metaModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-ink/75 backdrop-blur-sm p-4">
+    <div class="bg-cream-soft rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+      <!-- Header -->
+      <div class="bg-indigo-deep text-cream p-6 sm:p-7 flex items-start justify-between gap-4 flex-shrink-0">
+        <div class="min-w-0">
+          <p class="text-[0.7rem] font-bold tracking-[0.15em] uppercase text-gold mb-1">Metadata Akademik</p>
+          <h2 class="font-display text-2xl sm:text-3xl">{motif.name}</h2>
+          <p class="text-cream/70 text-sm mt-2">Standar dokumentasi budaya internasional & lokal</p>
+        </div>
+        <button id="closeMetaModal" class="w-10 h-10 rounded-full bg-cream/10 hover:bg-cream/20 text-cream text-xl font-bold flex-shrink-0 grid place-items-center transition" aria-label="Tutup">×</button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="bg-cream-soft border-b border-line px-6 sm:px-7 pt-2 flex flex-wrap gap-1 flex-shrink-0">
+        <button class="modal-tab active px-4 py-3 font-semibold text-sm transition relative" data-mtab="dublin">
+          📋 Dublin Core
+          <span class="modal-tab-ind absolute left-3 right-3 bottom-0 h-[2px] bg-sogan rounded-t"></span>
+        </button>
+        <button class="modal-tab px-4 py-3 font-semibold text-sm transition relative" data-mtab="cidoc">
+          🕸️ CIDOC Relationship
+          <span class="modal-tab-ind absolute left-3 right-3 bottom-0 h-[2px] bg-sogan rounded-t opacity-0"></span>
+        </button>
+        <button class="modal-tab px-4 py-3 font-semibold text-sm transition relative" data-mtab="json">
+          { } JSON
+          <span class="modal-tab-ind absolute left-3 right-3 bottom-0 h-[2px] bg-sogan rounded-t opacity-0"></span>
+        </button>
+      </div>
+
+      <!-- Tab content -->
+      <div class="overflow-y-auto flex-1 p-6 sm:p-7">
+        <!-- Dublin Core -->
+        <div class="modal-panel active" data-mpanel="dublin">
+          <p class="text-xs text-ink-soft italic mb-4">15 elemen standar Dublin Core Metadata Initiative (ISO 15836).</p>
+          <div class="grid sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+            {Object.entries(motif.metadata || {}).map(([key, value]) => (
+              <div class="flex flex-col py-2 border-b border-line">
+                <span class="text-[0.7rem] font-bold tracking-[0.1em] uppercase text-sogan">{key}</span>
+                <span class="text-ink mt-1">{value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <!-- CIDOC -->
+        <div class="modal-panel hidden" data-mpanel="cidoc">
+          <p class="text-xs text-ink-soft italic mb-4">CIDOC CRM (ISO 21127:2023) — knowledge graph budaya berbasis triple [Subjek] — [Predikat] — [Objek].</p>
+          <div class="space-y-2">
+            {(motif.cidoc || []).map(triple => (
+              <div class="flex flex-wrap items-center gap-2 bg-cream border border-line rounded-xl px-4 py-3">
+                <span class="inline-block px-3 py-1 rounded-md bg-sogan/15 text-sogan-deep text-sm font-semibold">{triple.s}</span>
+                <span class="text-ink-soft italic text-sm">{triple.p}</span>
+                <span class="inline-block px-3 py-1 rounded-md bg-ink/8 text-ink text-sm font-semibold">{triple.o}</span>
+              </div>
+            ))}
+          </div>
+          <p class="mt-5 text-xs text-ink-soft italic">Tiap baris adalah relasi knowledge graph yang membentuk pondasi untuk sistem kecerdasan artifisial budaya.</p>
+        </div>
+
+        <!-- JSON -->
+        <div class="modal-panel hidden" data-mpanel="json">
+          <p class="text-xs text-ink-soft italic mb-4">Format mesin-baca untuk peneliti, developer, atau integrasi sistem.</p>
+          <pre id="jsonContent" class="bg-ink text-cream-soft text-xs sm:text-sm p-5 rounded-2xl overflow-x-auto leading-relaxed font-mono"></pre>
+        </div>
+      </div>
+
+      <!-- Footer dengan tombol download -->
+      <div class="bg-cream border-t border-line p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 flex-shrink-0">
+        <p class="text-xs text-ink-soft">Bisa kamu unduh sebagai file JSON untuk keperluan riset/integrasi.</p>
+        <button id="downloadJsonBtn" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-sogan text-cream text-sm font-semibold hover:bg-sogan-deep transition">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Download JSON
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline define:vars={{ motifMeta: { id: motif.id, name: motif.name, metadata: motif.metadata, pradata: motif.pradata, cidoc: motif.cidoc } }}>
+    window.__MOTIFMETA = motifMeta;
+  </script>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const modal = document.getElementById('metaModal');
+      const openBtn = document.getElementById('openMetaModal');
+      const closeBtn = document.getElementById('closeMetaModal');
+      const tabs = document.querySelectorAll('.modal-tab');
+      const panels = document.querySelectorAll('.modal-panel');
+      const jsonEl = document.getElementById('jsonContent');
+      const dlBtn = document.getElementById('downloadJsonBtn');
+
+      if (!modal || !openBtn) return;
+
+      // Render JSON content
+      const data = window.__MOTIFMETA;
+      if (jsonEl) jsonEl.textContent = JSON.stringify(data, null, 2);
+
+      function openModal() {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeModal() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+      }
+
+      openBtn.addEventListener('click', openModal);
+      closeBtn.addEventListener('click', closeModal);
+      modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal(); });
+
+      // Tab switcher
+      tabs.forEach(t => {
+        t.addEventListener('click', () => {
+          const target = t.dataset.mtab;
+          tabs.forEach(x => {
+            x.classList.remove('active');
+            const ind = x.querySelector('.modal-tab-ind');
+            if (ind) ind.style.opacity = '0';
+          });
+          t.classList.add('active');
+          const ind = t.querySelector('.modal-tab-ind');
+          if (ind) ind.style.opacity = '1';
+          panels.forEach(p => {
+            p.classList.toggle('hidden', p.dataset.mpanel !== target);
+            p.classList.toggle('active', p.dataset.mpanel === target);
+          });
+        });
+      });
+
+      // Download JSON
+      if (dlBtn) {
+        dlBtn.addEventListener('click', () => {
+          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `batikku-${data.id}-metadata.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        });
+      }
+    });
+  </script>
+
+  <!-- DISCOVER SIMILAR -->
+  <section class="max-w-content mx-auto px-5 sm:px-8 lg:px-16 py-10 sm:py-16">
+    <p class="section-label">Lanjutkan Penjelajahan</p>
+    <h2 class="text-3xl sm:text-5xl mb-2">Motif yang serupa</h2>
+    <p class="text-ink-soft mb-10">Dipilih berdasarkan kemiripan warna, tema, dan daerah asal.</p>
+    <div class="grid sm:grid-cols-3 gap-6">
+      {similar.map(s => (
+        <a href={`/motif/${s.id}`} class="bg-cream-soft border border-line rounded-2xl overflow-hidden cursor-pointer transition hover:-translate-y-1 hover:border-sogan block">
+          <div class="aspect-[3/2]" set:html={visualMotif(s, 'wide')} />
+          <div class="p-5">
+            <span class="text-[0.74rem] font-semibold tracking-[0.1em] uppercase text-sogan">{s.region}</span>
+            <h3 class="font-display text-xl my-1.5">{s.name}</h3>
+            <p class="text-sm text-ink-soft">{s.summary}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <div class="text-center py-12 sm:py-20">
+    <a href="/catalog" class="btn-ghost">← Kembali ke Katalog</a>
+  </div>
+
+</Layout>

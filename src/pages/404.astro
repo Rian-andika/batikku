@@ -1,0 +1,67 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { MOTIFS } from '../data/motifs.js';
+
+// Suggest 3 motif acak biar user tetap engage
+const suggestions = [...MOTIFS]
+  .sort(() => Math.random() - 0.5)
+  .slice(0, 3);
+---
+
+<Layout title="Halaman Tidak Ditemukan — Batikku">
+
+  <div class="min-h-[calc(100vh-72px)] flex items-center">
+    <div class="max-w-content mx-auto px-5 sm:px-8 lg:px-16 py-16 sm:py-20 grid lg:grid-cols-2 gap-10 lg:gap-20 items-center">
+
+      <!-- Visual: Pola batik dengan angka 404 di tengah -->
+      <div class="relative aspect-square max-w-[400px] sm:max-w-[480px] mx-auto w-full">
+        <svg viewBox="0 0 400 400" class="absolute inset-0 w-full h-full">
+          <defs>
+            <linearGradient id="g404" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#7B4A2B"/>
+              <stop offset="1" stop-color="#1F1A15"/>
+            </linearGradient>
+          </defs>
+          <g fill="none" stroke="#7B4A2B" stroke-opacity="0.12" stroke-width="6" stroke-linecap="round">
+            <path d="M-20,60 Q20,20 60,60 T140,60 T220,60 T300,60 T380,60 T460,60"/>
+            <path d="M-20,140 Q20,100 60,140 T140,140 T220,140 T300,140 T380,140 T460,140"/>
+            <path d="M-20,220 Q20,180 60,220 T140,220 T220,220 T300,220 T380,220 T460,220"/>
+            <path d="M-20,300 Q20,260 60,300 T140,300 T220,300 T300,300 T380,300 T460,300"/>
+            <path d="M-20,380 Q20,340 60,380 T140,380 T220,380 T300,380 T380,380 T460,380"/>
+          </g>
+          <g fill="none" stroke="#7B4A2B" stroke-opacity="0.25" stroke-width="2.5" transform="translate(200,200)">
+            <ellipse rx="50" ry="80"/>
+            <ellipse rx="80" ry="50"/>
+          </g>
+          <circle cx="200" cy="200" r="14" fill="#C9A961"/>
+          <text x="200" y="218" text-anchor="middle" font-family="Fraunces, serif" font-size="92" font-weight="500" font-style="italic" fill="url(#g404)">404</text>
+        </svg>
+      </div>
+
+      <!-- Konten -->
+      <div>
+        <p class="text-[0.78rem] font-bold tracking-[0.14em] uppercase text-sogan mb-4">◆ Halaman tidak ditemukan</p>
+        <h1 class="text-4xl sm:text-6xl tracking-tight mb-5">Halaman ini <em class="italic text-sogan">tersesat di kain.</em></h1>
+        <p class="text-lg text-ink-soft mb-8 max-w-[50ch]">Sepertinya tautan yang kamu cari sudah berpindah atau belum ada di koleksi kami. Tapi tenang — ada banyak motif lain yang menunggu untuk dibaca.</p>
+
+        <div class="flex gap-3 flex-wrap mb-12">
+          <a href="/" class="btn-primary">← Kembali ke Beranda</a>
+          <a href="/catalog" class="btn-ghost">Jelajahi Katalog</a>
+        </div>
+
+        <div>
+          <p class="text-[0.7rem] font-bold tracking-[0.14em] uppercase text-ink-soft mb-3">Mungkin kamu suka motif ini</p>
+          <div class="grid grid-cols-3 gap-3">
+            {suggestions.map(m => (
+              <a href={`/motif/${m.id}`} class="block p-4 bg-cream-soft border border-line rounded-2xl hover:border-sogan hover:-translate-y-1 transition">
+                <span class="text-[0.65rem] font-bold tracking-[0.1em] uppercase text-sogan">{m.region}</span>
+                <h3 class="font-display text-base mt-1.5">{m.name}</h3>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</Layout>

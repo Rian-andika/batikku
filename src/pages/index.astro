@@ -1,0 +1,325 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { MOTIFS, visualMotif } from '../data/motifs.js';
+
+// Ambil 3 motif unggulan
+const featured = MOTIFS.slice(0, 3);
+
+// === Data untuk fitur "Tahukah Kamu" (fakta acak dari motif) ===
+const facts = [
+  "Motif Parang dulu hanya boleh dipakai oleh Sultan dan keturunannya.",
+  "Warna sogan yang khas berasal dari kulit pohon soga, bukan pewarna sintetis.",
+  "Motif Kawung melambangkan kesucian dan pengendalian diri dalam filosofi Jawa.",
+  "Batik Truntum diciptakan seorang ratu sebagai simbol cinta yang tumbuh kembali.",
+  "Kain Poleng Bali yang hitam-putih melambangkan Rwa Bhineda — keseimbangan dua hal yang berbeda.",
+  "Motif Mega Mendung punya tujuh gradasi warna yang melambangkan tujuh lapis langit.",
+  "Batik Simbut dari suku Baduy diyakini sebagai salah satu motif batik tertua.",
+  "Sekar Jagad berarti 'bunga dunia' — melambangkan keragaman dalam satu kesatuan.",
+  "Motif Sido Mukti dipakai pengantin Jawa sebagai doa untuk hidup mulia dan makmur.",
+  "Batik Dayak memindahkan motif ukiran perisai dan tato ke atas kain.",
+];
+
+// === Data untuk "Sebaran Motif" (hitung motif per daerah) ===
+const regionCount = {};
+MOTIFS.forEach(m => {
+  let r = m.region.split('&')[0].split(',')[0].trim();
+  // Normalisasi nama daerah yang sama
+  if (r === 'Solo') r = 'Surakarta';
+  regionCount[r] = (regionCount[r] || 0) + 1;
+});
+const regionData = Object.entries(regionCount)
+  .map(([region, count]) => ({ region, count }))
+  .sort((a, b) => b.count - a.count);
+const maxRegionCount = Math.max(...regionData.map(r => r.count));
+const totalRegions = regionData.length;
+---
+
+<Layout title="Batikku — Bahasa Hidup di Balik Batik">
+
+  <!-- HERO -->
+  <section class="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-b from-cream-soft to-cream">
+    <!-- Pola parang dekoratif di kanan -->
+    <svg id="heroParang" class="hero-parang absolute -right-[8%] top-0 bottom-0 w-[55%] opacity-[0.13] text-sogan pointer-events-none" viewBox="0 0 200 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <pattern id="parang" width="60" height="60" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <path d="M0,30 Q15,0 30,30 T60,30" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+          <path d="M0,50 Q15,20 30,50 T60,50" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        </pattern>
+      </defs>
+      <rect width="200" height="400" fill="url(#parang)"/>
+    </svg>
+
+    <div class="relative z-10 max-w-content mx-auto px-5 sm:px-8 lg:px-16 max-w-[760px]">
+      <span class="eyebrow mb-7 hero-anim" style="animation-delay: 0.1s">Culture Preservation · Batik Indonesia</span>
+      <h1 class="text-5xl sm:text-7xl lg:text-[5.5rem] tracking-tight mb-6 hero-anim" style="animation-delay: 0.3s">
+        Setiap motif adalah <em class="italic text-sogan">sebuah bahasa.</em>
+      </h1>
+      <p class="text-lg sm:text-xl text-ink-soft max-w-[56ch] mb-10 hero-anim" style="animation-delay: 0.55s">
+        Di balik garis dan warna batik tersimpan pesan — tentang status, harapan, dan filosofi hidup.
+        Batikku mengajak kamu bukan sekadar melihat batik, tapi <strong>membacanya.</strong>
+      </p>
+      <div class="flex gap-4 flex-wrap hero-anim" style="animation-delay: 0.75s">
+        <a href="/catalog" class="btn-primary">Jelajahi Koleksi →</a>
+        <a href="#intro" class="btn-ghost">Pelajari Lebih Lanjut</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- INTRO -->
+  <section id="intro" class="py-20 sm:py-32">
+    <div class="max-w-content mx-auto px-5 sm:px-8 lg:px-16 grid lg:grid-cols-[1.1fr_0.9fr] gap-12 lg:gap-20 items-center">
+      <div class="on-scroll">
+        <p class="section-label">◆ Mengapa ini penting</p>
+        <h2 class="text-3xl sm:text-5xl tracking-tight mb-6">Batik bukan sekadar kain.</h2>
+        <p class="text-ink-soft mb-5 max-w-[52ch]">Selama berabad-abad, masyarakat Jawa dan Nusantara menggunakan motif batik untuk berkomunikasi tanpa kata. Motif tertentu hanya boleh dipakai bangsawan. Motif lain dikenakan saat pernikahan, kelahiran, atau berkabung.</p>
+        <p class="text-ink-soft mb-5 max-w-[52ch]">Namun makna-makna ini perlahan memudar dari ingatan generasi muda. Yang tersisa seringkali hanya keindahan visualnya — tanpa cerita di baliknya.</p>
+        <p class="text-ink-soft max-w-[52ch]">Batikku hadir untuk merawat pengetahuan itu: mendokumentasikan, menjelaskan, dan membuatnya dapat dijelajahi dengan cara yang layak bagi warisan sebesar ini.</p>
+      </div>
+      <div class="on-scroll">
+        <blockquote class="font-display italic text-2xl sm:text-4xl leading-tight text-indigo pl-7 border-l-[3px] border-gold">
+          "Membaca batik berarti mendengar percakapan leluhur yang <span class="text-sogan">masih berlangsung</span> hari ini."
+        </blockquote>
+      </div>
+    </div>
+  </section>
+
+  <!-- B: TAHUKAH KAMU (fakta acak) -->
+  <section class="py-12 sm:py-16 bg-cream-soft border-y border-line">
+    <div class="max-w-content mx-auto px-5 sm:px-8 lg:px-16">
+      <div class="max-w-[760px] mx-auto text-center on-scroll">
+        <p class="section-label justify-center inline-flex">◆ Tahukah Kamu?</p>
+        <blockquote id="factText" class="font-display text-2xl sm:text-3xl lg:text-4xl leading-tight text-ink my-4 min-h-[2.5em] flex items-center justify-center">
+          <!-- diisi JS -->
+        </blockquote>
+        <button id="nextFactBtn" class="inline-flex items-center gap-2 text-sm font-semibold text-sogan hover:text-sogan-deep transition mt-2">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+          Fakta lain
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- C: SEBARAN MOTIF NUSANTARA -->
+  <section class="py-16 sm:py-24">
+    <div class="max-w-content mx-auto px-5 sm:px-8 lg:px-16">
+      <div class="grid lg:grid-cols-[0.85fr_1.15fr] gap-10 lg:gap-16 items-center">
+        <div class="on-scroll">
+          <p class="section-label">◆ Sebaran Nusantara</p>
+          <h2 class="text-3xl sm:text-5xl tracking-tight mb-5">Dari Aceh sampai Bali.</h2>
+          <p class="text-ink-soft mb-6 max-w-[46ch]">Koleksi ini merangkum motif dari berbagai penjuru Indonesia. Beberapa daerah seperti Yogyakarta menjadi pusat tumbuhnya banyak motif klasik keraton.</p>
+          <div class="flex gap-8">
+            <div>
+              <div class="font-display text-4xl sm:text-5xl text-sogan leading-none">{MOTIFS.length}</div>
+              <div class="text-sm text-ink-soft mt-1">motif</div>
+            </div>
+            <div>
+              <div class="font-display text-4xl sm:text-5xl text-sogan leading-none">{totalRegions}</div>
+              <div class="text-sm text-ink-soft mt-1">daerah</div>
+            </div>
+          </div>
+        </div>
+        <div class="on-scroll space-y-3">
+          {regionData.map(r => (
+            <a href="/catalog" class="flex items-center gap-3 group">
+              <span class="text-sm w-24 sm:w-28 text-ink-soft group-hover:text-sogan transition flex-shrink-0">{r.region}</span>
+              <div class="flex-1 h-7 bg-cream-soft rounded-lg overflow-hidden border border-line">
+                <div class="h-full bg-sogan/80 group-hover:bg-sogan rounded-lg transition-all flex items-center justify-end pr-2" style={`width: ${Math.max((r.count / maxRegionCount) * 100, 12)}%`}>
+                  <span class="text-[0.7rem] font-bold text-cream">{r.count}</span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- D: MOTIF CAROUSEL (geser otomatis) -->
+  <section class="py-12 sm:py-16 bg-cream-soft border-y border-line overflow-hidden">
+    <div class="max-w-content mx-auto px-5 sm:px-8 lg:px-16 mb-8">
+      <p class="section-label">◆ Jelajah Cepat</p>
+      <h2 class="text-2xl sm:text-4xl tracking-tight">Kenali ragam motifnya.</h2>
+    </div>
+    <div class="carousel-track-wrap relative">
+      <div id="carouselTrack" class="flex gap-4 sm:gap-5 will-change-transform">
+        {[...MOTIFS, ...MOTIFS].map(m => (
+          <a href={`/motif/${m.id}`} class="carousel-card flex-shrink-0 w-[180px] sm:w-[220px] group">
+            <div class="aspect-[4/5] rounded-2xl overflow-hidden border border-line" set:html={visualMotif(m)} />
+            <p class="font-display text-lg mt-3 group-hover:text-sogan transition">{m.name}</p>
+            <p class="text-xs text-ink-soft">{m.region}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- E: MOTIF SOROTAN (random tiap kunjungan) -->
+  <section class="py-16 sm:py-24">
+    <div class="max-w-content mx-auto px-5 sm:px-8 lg:px-16">
+      <div id="spotlightCard" class="grid md:grid-cols-[0.9fr_1.1fr] gap-8 lg:gap-12 items-center on-scroll">
+        <!-- diisi JS -->
+      </div>
+    </div>
+  </section>
+
+  <script is:inline define:vars={{ facts, motifsLite: MOTIFS.map(m => ({ id: m.id, name: m.name, region: m.region, summary: m.summary, philosophy: m.philosophy, svg: visualMotif(m) })) }}>
+    window.__FACTS = facts;
+    window.__MOTIFS_LITE = motifsLite;
+  </script>
+
+  <script is:inline>
+    (function() {
+      // ===== B: Tahukah Kamu =====
+      const facts = window.__FACTS || [];
+      const factEl = document.getElementById('factText');
+      const factBtn = document.getElementById('nextFactBtn');
+      let lastFact = -1;
+      function showRandomFact() {
+        if (!factEl || !facts.length) return;
+        let idx;
+        do { idx = Math.floor(Math.random() * facts.length); } while (idx === lastFact && facts.length > 1);
+        lastFact = idx;
+        factEl.style.opacity = '0';
+        setTimeout(() => {
+          factEl.textContent = facts[idx];
+          factEl.style.transition = 'opacity 0.5s ease';
+          factEl.style.opacity = '1';
+        }, 200);
+      }
+      if (factEl) {
+        factEl.textContent = facts[Math.floor(Math.random() * facts.length)];
+        lastFact = facts.indexOf(factEl.textContent);
+      }
+      if (factBtn) factBtn.addEventListener('click', showRandomFact);
+
+      // ===== D: Carousel auto-scroll =====
+      const track = document.getElementById('carouselTrack');
+      if (track && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        let pos = 0;
+        let paused = false;
+        const speed = 0.4; // px per frame
+        // Lebar setengah track (karena kita duplikat motif 2x)
+        function step() {
+          if (!paused) {
+            pos -= speed;
+            const halfWidth = track.scrollWidth / 2;
+            if (Math.abs(pos) >= halfWidth) pos = 0;
+            track.style.transform = `translateX(${pos}px)`;
+          }
+          requestAnimationFrame(step);
+        }
+        track.addEventListener('mouseenter', () => paused = true);
+        track.addEventListener('mouseleave', () => paused = false);
+        requestAnimationFrame(step);
+      }
+
+      // ===== E: Motif Sorotan (random) =====
+      const motifs = window.__MOTIFS_LITE || [];
+      const spotEl = document.getElementById('spotlightCard');
+      if (spotEl && motifs.length) {
+        const m = motifs[Math.floor(Math.random() * motifs.length)];
+        spotEl.innerHTML = `
+          <div class="aspect-square rounded-3xl overflow-hidden border border-line max-w-[360px] mx-auto w-full">${m.svg}</div>
+          <div>
+            <p class="section-label">◆ Motif Sorotan</p>
+            <h2 class="font-display text-3xl sm:text-5xl tracking-tight mb-2">${m.name}</h2>
+            <p class="text-sm text-sogan font-semibold mb-4">${m.region}</p>
+            <p class="text-ink-soft leading-relaxed mb-6 max-w-[48ch]">${m.philosophy || m.summary}</p>
+            <a href="/motif/${m.id}" class="btn-primary">Baca selengkapnya →</a>
+          </div>`;
+      }
+    })();
+  </script>
+
+  <!-- FEATURED MOTIFS -->
+  <section id="featured" class="bg-indigo-deep text-cream py-20 sm:py-32">
+    <div class="max-w-content mx-auto px-5 sm:px-8 lg:px-16">
+      <div class="flex justify-between items-end flex-wrap gap-4 mb-12 on-scroll">
+        <div>
+          <p class="section-label text-gold">◆ Motif Pilihan</p>
+          <h2 class="text-3xl sm:text-5xl tracking-tight text-cream">Mulai dari tiga<br>percakapan ini.</h2>
+        </div>
+        <p class="text-cream/70 max-w-[44ch]">Setiap motif punya asal, filosofi, dan aturan pemakaiannya sendiri. Ini sebagian kecil dari koleksi yang sedang kami susun.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        {featured.map((m) => (
+          <a href={`/motif/${m.id}`} class="bg-cream/[0.06] border border-cream/[0.14] rounded-2xl overflow-hidden transition hover:-translate-y-1.5 hover:border-gold on-scroll block">
+            <div class="aspect-[4/5] relative overflow-hidden" set:html={visualMotif(m)} />
+            <div class="p-6">
+              <span class="text-xs font-semibold tracking-[0.1em] uppercase text-gold">{m.region}</span>
+              <h3 class="text-2xl text-cream my-2">{m.name}</h3>
+              <p class="text-cream/70 text-[0.95rem]">{m.summary}</p>
+              <div class="flex gap-2 mt-4 flex-wrap">
+                {m.themes.map(t => <span class="text-xs px-2.5 py-1 rounded-full bg-cream/10 text-cream/80">{t}</span>)}
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPLORE / CARA MENJELAJAH -->
+  <section class="py-20 sm:py-32">
+    <div class="max-w-content mx-auto px-5 sm:px-8 lg:px-16">
+      <div class="max-w-[640px] on-scroll">
+        <p class="section-label">◆ Cara Menjelajah</p>
+        <h2 class="text-3xl sm:text-5xl tracking-tight mb-6">Temukan motif lewat cerita, bukan sekadar nama.</h2>
+        <p class="text-ink-soft">Terinspirasi cara koleksi budaya dunia menyusun arsipnya, kamu bisa menelusuri batik dari berbagai sudut pandang.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6 mt-12">
+        <a href="/catalog" class="p-8 border border-line rounded-2xl bg-cream-soft transition hover:border-sogan hover:-translate-y-1 on-scroll block">
+          <div class="w-12 h-12 rounded-xl bg-sogan/[0.12] grid place-items-center text-sogan mb-5">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+          </div>
+          <h3 class="font-display text-xl mb-2">Berdasarkan Warna</h3>
+          <p class="text-sm text-ink-soft">Pilih warna, temukan motif. Pelajari mengapa sogan berkaitan dengan keraton dan indigo dengan pesisir.</p>
+        </a>
+        <a href="/map" class="p-8 border border-line rounded-2xl bg-cream-soft transition hover:border-sogan hover:-translate-y-1 on-scroll block">
+          <div class="w-12 h-12 rounded-xl bg-sogan/[0.12] grid place-items-center text-sogan mb-5">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          </div>
+          <h3 class="font-display text-xl mb-2">Berdasarkan Daerah</h3>
+          <p class="text-sm text-ink-soft">Telusuri peta Nusantara — dari Aceh, Cirebon, hingga Bali, masing-masing dengan karakter motifnya.</p>
+        </a>
+        <a href="/catalog" class="p-8 border border-line rounded-2xl bg-cream-soft transition hover:border-sogan hover:-translate-y-1 on-scroll block">
+          <div class="w-12 h-12 rounded-xl bg-sogan/[0.12] grid place-items-center text-sogan mb-5">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <h3 class="font-display text-xl mb-2">Berdasarkan Makna</h3>
+          <p class="text-sm text-ink-soft">Cari motif menurut konteksnya — pernikahan, kelahiran, atau acara adat — beserta filosofi di baliknya.</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA BAND -->
+  <div class="max-w-content mx-auto px-5 sm:px-8 lg:px-16">
+    <div class="bg-sogan text-cream-soft text-center rounded-3xl py-16 sm:py-20 px-8 my-8 on-scroll">
+      <h2 class="text-3xl sm:text-5xl mb-4">Siap membaca batik?</h2>
+      <p class="text-cream/80 max-w-[48ch] mx-auto mb-8">Jelajahi koleksi lengkap dan temukan percakapan yang tersembunyi di setiap helai kain.</p>
+      <a href="/catalog" class="inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-semibold bg-cream-soft text-sogan-deep hover:bg-cream transition">Buka Katalog →</a>
+    </div>
+  </div>
+
+  <script is:inline>
+    // Subtle parallax pada pola parang hero
+    (function() {
+      const el = document.getElementById('heroParang');
+      if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      let ticking = false;
+      window.addEventListener('scroll', () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          const y = window.scrollY * 0.15;
+          el.style.transform = `translateY(${y}px)`;
+          ticking = false;
+        });
+      }, { passive: true });
+    })();
+  </script>
+
+</Layout>

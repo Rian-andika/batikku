@@ -1,0 +1,17 @@
+# Konfigurasi Netlify untuk Batikku
+# Build Astro + Netlify Functions
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[functions]
+  # Pakai esbuild biar function modern (ESM) jalan mulus
+  node_bundler = "esbuild"
+
+# Redirect supaya path function rapi (opsional, sudah default di /.netlify/functions/)
+[[redirects]]
+  from = "/api/analyze-batik"
+  to = "/.netlify/functions/analyze-batik"
+  status = 200

@@ -1,0 +1,395 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { MOTIFS, COLOR_TOKENS, patternSVG } from '../data/motifs.js';
+
+// Generate semua data yg dipakai client-side, di-pass via window
+// Cara Astro: render data jadi JSON di script tag
+---
+
+<Layout title="Katalog Motif — Batikku">
+
+  <div class="max-w-content mx-auto px-5 sm:px-8 lg:px-16 pt-10 sm:pt-16 pb-4">
+    <p class="section-label">◆ Katalog Motif</p>
+    <h1 class="text-4xl sm:text-6xl tracking-tight mb-4">Jelajahi percakapan dalam kain.</h1>
+    <p class="text-ink-soft max-w-[54ch]">Saring koleksi dari berbagai sudut pandang — mulai dari warna yang menarik perhatianmu, hingga makna di balik tiap motif.</p>
+  </div>
+
+  <!-- FITUR GONG: PENCARIAN WARNA -->
+  <div class="max-w-content mx-auto px-5 sm:px-8 lg:px-16">
+    <div class="bg-indigo-deep rounded-3xl p-6 sm:p-10 mb-6 text-cream">
+      <div class="flex items-center gap-3 mb-2">
+        <h2 class="font-display text-2xl text-cream">Telusuri lewat warna</h2>
+      </div>
+      <p class="text-cream/65 text-[0.95rem] mb-6">Warna dalam batik bukan sekadar estetika — tiap warna punya makna. Klik untuk menyaring.</p>
+      <div id="swatches" class="flex gap-3.5 flex-wrap"></div>
+      <div id="colorMeaning" class="mt-5 min-h-[1.5rem] text-[0.95rem] text-cream/80 italic">Arahkan kursor atau klik warna untuk melihat maknanya.</div>
+    </div>
+  </div>
+
+  <!-- FILTER 6 DIMENSI -->
+  <div class="max-w-content mx-auto px-5 sm:px-8 lg:px-16">
+    <div id="filters" class="bg-cream-soft border border-line rounded-3xl p-5 sm:p-8 mb-8"></div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="max-w-content mx-auto px-5 sm:px-8 lg:px-16">
+    <div class="flex gap-4 items-center flex-wrap mb-8">
+      <div class="flex-1 min-w-[240px] relative" id="searchWrap">
+        <div class="flex items-center gap-2.5 bg-cream-soft border-[1.5px] border-line rounded-full px-5 py-3 transition focus-within:border-sogan focus-within:shadow-[0_0_0_3px_rgba(123,74,43,0.1)]">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-ink-soft flex-shrink-0"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="searchInput" autocomplete="off" placeholder="Cari motif, warna, daerah, tema..." class="border-0 bg-transparent outline-none font-body text-base w-full text-ink" />
+          <button id="searchClear" class="hidden w-6 h-6 rounded-full bg-ink/10 hover:bg-ink/20 text-ink text-xs grid place-items-center transition flex-shrink-0" aria-label="Bersihkan">✕</button>
+        </div>
+        <!-- DROPDOWN SARAN -->
+        <div id="searchSuggest" class="hidden absolute top-full left-0 right-0 mt-2 bg-cream-soft border border-line rounded-2xl shadow-2xl max-h-[440px] overflow-y-auto z-40">
+          <!-- diisi oleh JS -->
+        </div>
+      </div>
+      <button id="surpriseBtn" class="font-semibold text-[0.95rem] px-5 py-3 rounded-full border-[1.5px] border-ink bg-transparent hover:bg-ink hover:text-cream transition whitespace-nowrap">🎲 Surprise Me</button>
+    </div>
+    <p id="resultCount" class="text-[0.95rem] text-ink-soft mb-6"></p>
+  </div>
+
+  <div class="max-w-content mx-auto px-5 sm:px-8 lg:px-16">
+    <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-5 sm:gap-6 pb-20"></div>
+  </div>
+
+  <!-- Pass data ke client-side -->
+  <script is:inline define:vars={{ motifsData: MOTIFS, colorTokens: COLOR_TOKENS }}>
+    window.__MOTIFS = motifsData;
+    window.__COLORS = colorTokens;
+  </script>
+
+  <script is:inline>
+    /* ===== STATE filter ===== */
+    const state = {
+      colors: new Set(), region: new Set(), themes: new Set(),
+      contexts: new Set(), wearer: new Set(), technique: new Set(),
+      era: new Set(), search: "",
+    };
+
+    const MOTIFS = window.__MOTIFS;
+    const COLORS = window.__COLORS;
+    const uniq = (arr) => [...new Set(arr)];
+    const dims = {
+      region: uniq(MOTIFS.map(m => m.region)),
+      themes: uniq(MOTIFS.flatMap(m => m.themes)),
+      contexts: uniq(MOTIFS.flatMap(m => m.contexts)),
+      wearer: uniq(MOTIFS.map(m => m.wearer)),
+      technique: uniq(MOTIFS.map(m => m.technique)),
+      era: uniq(MOTIFS.map(m => m.era)),
+    };
+    const dimLabels = { region:"Daerah", themes:"Tema", contexts:"Konteks Pemakaian", wearer:"Status Pemakai", technique:"Teknik", era:"Era" };
+
+    /* SWATCHES */
+    const swEl = document.getElementById('swatches');
+    const meanEl = document.getElementById('colorMeaning');
+    Object.entries(COLORS).forEach(([key, c]) => {
+      const b = document.createElement('button');
+      b.className = 'relative w-[54px] h-[54px] rounded-full cursor-pointer border-[3px] border-transparent transition hover:scale-110 outline-none';
+      b.style.background = c.hex;
+      b.title = c.label;
+      b.onmouseenter = () => { meanEl.innerHTML = `<strong class="text-gold not-italic">${c.label}.</strong> ${c.meaning}`; };
+      b.onclick = () => {
+        toggle(state.colors, key);
+        b.classList.toggle('border-cream');
+        b.classList.toggle('scale-110');
+        meanEl.innerHTML = `<strong class="text-gold not-italic">${c.label}.</strong> ${c.meaning}`;
+        render();
+      };
+      swEl.appendChild(b);
+    });
+
+    /* FILTER CHIPS */
+    const fEl = document.getElementById('filters');
+    Object.keys(dims).forEach(dim => {
+      const row = document.createElement('div');
+      row.className = 'mb-5 last:mb-0';
+      row.innerHTML = `<div class="text-[0.78rem] font-bold tracking-[0.08em] uppercase text-ink-soft mb-2.5">${dimLabels[dim]}</div>`;
+      const chips = document.createElement('div');
+      chips.className = 'flex gap-2 flex-wrap';
+      dims[dim].forEach(val => {
+        const chip = document.createElement('button');
+        chip.className = 'font-body text-sm font-medium px-4 py-2 rounded-full border-[1.5px] border-line bg-transparent text-ink cursor-pointer transition hover:border-sogan';
+        chip.textContent = val;
+        chip.onclick = () => {
+          toggle(state[dim], val);
+          chip.classList.toggle('bg-sogan');
+          chip.classList.toggle('text-cream-soft');
+          chip.classList.toggle('border-sogan');
+          render();
+        };
+        chips.appendChild(chip);
+      });
+      row.appendChild(chips);
+      fEl.appendChild(row);
+    });
+
+    function toggle(set, val) { set.has(val) ? set.delete(val) : set.add(val); }
+
+    // ===== SMART SEARCH HELPER =====
+    // Normalisasi: lowercase + hapus accent
+    const norm = (s) => (s || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    // Cek "word boundary match" — query harus jadi awal kata atau kata penuh
+    // Ini yg bikin "bali" gak match "Balikpapan" sebagai partial
+    function wordMatch(text, q) {
+      if (!q) return false;
+      const t = norm(text);
+      const n = norm(q);
+      // Match: di awal text, atau setelah spasi/tanda baca
+      const re = new RegExp('(^|[\\s,;:\\.\\-])' + n.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'), 'i');
+      return re.test(t);
+    }
+
+    // Cek match presisi untuk field structured (warna, daerah, dll)
+    function exactMatch(text, q) {
+      return norm(text) === norm(q);
+    }
+
+    // ===== AUTO-SUGGEST: bangun index suggestion =====
+    const SUGGEST_INDEX = (() => {
+      const items = [];
+      // Warna (dari COLOR_TOKENS)
+      Object.entries(COLORS).forEach(([key, c]) => {
+        items.push({ cat: 'warna', label: c.label, value: key, hint: c.meaning.substring(0, 60) + '...' });
+      });
+      // Daerah (unique)
+      [...new Set(MOTIFS.map(m => m.region))].forEach(r => {
+        const count = MOTIFS.filter(m => m.region === r).length;
+        items.push({ cat: 'daerah', label: r, value: r, hint: `${count} motif` });
+      });
+      // Tema (unique, flat)
+      [...new Set(MOTIFS.flatMap(m => m.themes))].forEach(t => {
+        const count = MOTIFS.filter(m => m.themes.includes(t)).length;
+        items.push({ cat: 'tema', label: t, value: t, hint: `${count} motif` });
+      });
+      // Motif (nama)
+      MOTIFS.forEach(m => {
+        items.push({ cat: 'motif', label: m.name, value: m.id, hint: m.region, motifId: m.id });
+      });
+      // Konteks pemakaian
+      [...new Set(MOTIFS.flatMap(m => m.contexts))].forEach(c => {
+        const count = MOTIFS.filter(m => m.contexts.includes(c)).length;
+        items.push({ cat: 'konteks', label: c, value: c, hint: `${count} motif` });
+      });
+      // Status pemakai
+      [...new Set(MOTIFS.map(m => m.wearer))].forEach(w => {
+        const count = MOTIFS.filter(m => m.wearer === w).length;
+        items.push({ cat: 'pemakai', label: w, value: w, hint: `${count} motif` });
+      });
+      return items;
+    })();
+
+    const CAT_META = {
+      warna:    { icon: '🎨', label: 'Warna' },
+      daerah:   { icon: '📍', label: 'Daerah' },
+      tema:     { icon: '🌸', label: 'Tema' },
+      motif:    { icon: '✦', label: 'Motif' },
+      konteks:  { icon: '🎭', label: 'Konteks Pemakaian' },
+      pemakai:  { icon: '👤', label: 'Status Pemakai' },
+    };
+
+    function buildSuggestions(q) {
+      if (!q || q.length < 1) return [];
+      const nq = norm(q);
+      // Score: exact > startsWith > contains
+      return SUGGEST_INDEX.map(item => {
+        const nl = norm(item.label);
+        let score = 0;
+        if (nl === nq) score = 100;
+        else if (nl.startsWith(nq)) score = 50;
+        else if (wordMatch(item.label, q)) score = 30;
+        else if (nl.includes(nq)) score = 10;
+        return { ...item, score };
+      })
+      .filter(x => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 12);
+    }
+
+    function renderSuggestions(items) {
+      const box = document.getElementById('searchSuggest');
+      if (!items.length) {
+        box.classList.add('hidden');
+        return;
+      }
+      // Group by category
+      const groups = {};
+      items.forEach(it => {
+        if (!groups[it.cat]) groups[it.cat] = [];
+        groups[it.cat].push(it);
+      });
+      let html = '';
+      const order = ['motif', 'warna', 'daerah', 'tema', 'konteks', 'pemakai'];
+      order.forEach(cat => {
+        if (!groups[cat]) return;
+        const meta = CAT_META[cat];
+        html += `<div class="px-4 pt-3 pb-1 text-[0.7rem] font-bold tracking-[0.12em] uppercase text-sogan">${meta.icon} ${meta.label}</div>`;
+        groups[cat].forEach(it => {
+          html += `<button class="suggest-item w-full text-left px-4 py-2.5 hover:bg-sogan/8 transition flex items-center justify-between gap-3 group" data-cat="${it.cat}" data-value="${it.value}"${it.motifId ? ` data-motifid="${it.motifId}"` : ''}>
+            <span class="text-ink font-medium">${it.label}</span>
+            <span class="text-xs text-ink-soft group-hover:text-sogan transition truncate max-w-[55%]">${it.hint}</span>
+          </button>`;
+        });
+      });
+      box.innerHTML = html;
+      box.classList.remove('hidden');
+
+      // Bind click
+      box.querySelectorAll('.suggest-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const cat = btn.dataset.cat;
+          const val = btn.dataset.value;
+          const motifId = btn.dataset.motifid;
+          handleSuggestClick(cat, val, motifId);
+        });
+      });
+    }
+
+    function handleSuggestClick(cat, val, motifId) {
+      // Klik nama motif → langsung ke halaman detail
+      if (cat === 'motif' && motifId) {
+        location.href = `/motif/${motifId}`;
+        return;
+      }
+      // Klik kategori lain → apply ke filter state
+      if (cat === 'warna')   state.colors.add(val);
+      if (cat === 'daerah')  state.region.add(val);
+      if (cat === 'tema')    state.themes.add(val);
+      if (cat === 'konteks') state.contexts.add(val);
+      if (cat === 'pemakai') state.wearer.add(val);
+      // Clear search text setelah pick
+      const inp = document.getElementById('searchInput');
+      inp.value = '';
+      state.search = '';
+      document.getElementById('searchSuggest').classList.add('hidden');
+      document.getElementById('searchClear').classList.add('hidden');
+      render();
+    }
+
+    // ===== Wire up search input =====
+    const inp = document.getElementById('searchInput');
+    const clearBtn = document.getElementById('searchClear');
+    const wrap = document.getElementById('searchWrap');
+    const sugg = document.getElementById('searchSuggest');
+
+    inp.addEventListener('input', (e) => {
+      const v = e.target.value.trim();
+      state.search = v.toLowerCase();
+      clearBtn.classList.toggle('hidden', v.length === 0);
+      renderSuggestions(buildSuggestions(v));
+      render();
+    });
+    inp.addEventListener('focus', () => {
+      if (inp.value.trim()) renderSuggestions(buildSuggestions(inp.value.trim()));
+    });
+    clearBtn.addEventListener('click', () => {
+      inp.value = '';
+      state.search = '';
+      clearBtn.classList.add('hidden');
+      sugg.classList.add('hidden');
+      render();
+      inp.focus();
+    });
+    // Klik luar → tutup dropdown
+    document.addEventListener('click', (e) => {
+      if (!wrap.contains(e.target)) sugg.classList.add('hidden');
+    });
+    // Enter → tutup dropdown saja (smart search di matches() udah jalan via render())
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        sugg.classList.add('hidden');
+        inp.blur();
+      }
+      if (e.key === 'Enter') {
+        sugg.classList.add('hidden');
+      }
+    });
+
+    document.getElementById('surpriseBtn').addEventListener('click', () => {
+      const r = MOTIFS[Math.floor(Math.random() * MOTIFS.length)];
+      location.href = `/motif/${r.id}`;
+    });
+
+    // ===== SMART SEARCH MATCHER =====
+    function matchesSearch(m, q) {
+      if (!q) return true;
+      // 1. Cek exact match di field structured (warna, daerah, wearer)
+      if (m.colors.some(c => exactMatch(COLORS[c]?.label || c, q))) return true;
+      if (exactMatch(m.region, q)) return true;
+      if (m.themes.some(t => exactMatch(t, q))) return true;
+      if (m.contexts.some(c => exactMatch(c, q))) return true;
+      if (exactMatch(m.wearer, q)) return true;
+      // 2. Cek "word boundary" di nama & daerah (presisi)
+      if (wordMatch(m.name, q)) return true;
+      if (wordMatch(m.region, q)) return true;
+      // 3. Cek word boundary di warna labels
+      if (m.colors.some(c => wordMatch(COLORS[c]?.label || c, q))) return true;
+      // 4. Cek di themes & contexts (word boundary)
+      if (m.themes.some(t => wordMatch(t, q))) return true;
+      if (m.contexts.some(c => wordMatch(c, q))) return true;
+      // 5. Cek di field naratif (lebih longgar — includes)
+      const naratif = norm(`${m.summary} ${m.philosophy}`);
+      if (naratif.includes(norm(q))) return true;
+      return false;
+    }
+
+    function matches(m) {
+      if (state.colors.size && ![...state.colors].some(c => m.colors.includes(c))) return false;
+      if (state.region.size && !state.region.has(m.region)) return false;
+      if (state.themes.size && ![...state.themes].some(t => m.themes.includes(t))) return false;
+      if (state.contexts.size && ![...state.contexts].some(c => m.contexts.includes(c))) return false;
+      if (state.wearer.size && !state.wearer.has(m.wearer)) return false;
+      if (state.technique.size && !state.technique.has(m.technique)) return false;
+      if (state.era.size && !state.era.has(m.era)) return false;
+      if (state.search && !matchesSearch(m, state.search)) return false;
+      return true;
+    }
+
+    function patternSVG(m) {
+      const stroke = "#F5EEE1";
+      const patterns = {
+        parang: `<g fill="none" stroke="${stroke}" stroke-opacity="0.32" stroke-width="3" stroke-linecap="round"><path d="M-10,25 Q5,8 20,25 T50,25 T80,25 T110,25"/><path d="M-10,50 Q5,33 20,50 T50,50 T80,50 T110,50"/><path d="M-10,75 Q5,58 20,75 T50,75 T80,75 T110,75"/><path d="M-10,100 Q5,83 20,100 T50,100 T80,100 T110,100"/></g>`,
+        kawung: `<g fill="none" stroke="${stroke}" stroke-opacity="0.45" stroke-width="2.5"><ellipse cx="25" cy="28" rx="10" ry="15"/><ellipse cx="50" cy="28" rx="10" ry="15"/><ellipse cx="75" cy="28" rx="10" ry="15"/><ellipse cx="25" cy="70" rx="10" ry="15"/><ellipse cx="50" cy="70" rx="10" ry="15"/><ellipse cx="75" cy="70" rx="10" ry="15"/><ellipse cx="37" cy="49" rx="10" ry="15"/><ellipse cx="62" cy="49" rx="10" ry="15"/><ellipse cx="37" cy="91" rx="10" ry="15"/><ellipse cx="62" cy="91" rx="10" ry="15"/></g>`,
+        mega: `<g fill="none" stroke="${stroke}" stroke-opacity="0.4" stroke-width="3" stroke-linecap="round"><path d="M10,40 q0,-18 18,-18 q18,0 18,14 q14,-9 23,2 q9,7 0,16"/><path d="M5,72 q0,-20 20,-20 q20,0 20,15 q15,-10 24,2 q10,8 0,18"/><path d="M18,100 q0,-15 15,-15 q15,0 15,11"/></g>`,
+        truntum: `<g fill="${stroke}" fill-opacity="0.4">${[...Array(5)].map((_,i)=>[...Array(4)].map((_,j)=>`<g transform="translate(${15+i*18},${18+j*28})"><circle r="2"/><circle cx="6" r="1.3"/><circle cx="-6" r="1.3"/><circle cy="6" r="1.3"/><circle cy="-6" r="1.3"/></g>`).join('')).join('')}</g>`,
+        ceplok: `<g fill="none" stroke="${stroke}" stroke-opacity="0.4" stroke-width="2">${[...Array(4)].map((_,i)=>[...Array(5)].map((_,j)=>`<g transform="translate(${18+i*22},${15+j*24})"><circle r="7"/><path d="M-7,0 L0,-7 L7,0 L0,7 Z"/></g>`).join('')).join('')}</g>`,
+        sekar: `<g fill="none" stroke="${stroke}" stroke-opacity="0.38" stroke-width="2">${[...Array(4)].map((_,i)=>[...Array(5)].map((_,j)=>`<g transform="translate(${18+i*22},${14+j*24}) rotate(${(i+j)*30})"><path d="M0,-8 C4,-4 4,4 0,8 C-4,4 -4,-4 0,-8Z"/><path d="M-8,0 C-4,-4 4,-4 8,0 C4,4 -4,4 -8,0Z"/></g>`).join('')).join('')}</g>`,
+      };
+      return `<svg viewBox="0 0 100 125" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="gc-${m.id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${m.bg[0]}"/><stop offset="1" stop-color="${m.bg[1]}"/></linearGradient></defs><rect width="100" height="125" fill="url(#gc-${m.id})"/>${patterns[m.pattern]||patterns.ceplok}</svg>`;
+    }
+
+    const grid = document.getElementById('grid');
+    const countEl = document.getElementById('resultCount');
+
+    function render() {
+      const results = MOTIFS.filter(matches);
+      countEl.innerHTML = `Menampilkan <strong class="text-ink">${results.length}</strong> dari ${MOTIFS.length} motif`;
+      if (results.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-16 text-ink-soft"><h3 class="font-display text-2xl text-ink mb-2">Tidak ada motif yang cocok</h3><p>Coba kurangi filter atau ganti kombinasi warna.</p></div>`;
+        return;
+      }
+      grid.innerHTML = results.map((m, i) => {
+        const dots = m.colors.map(c => `<span class="w-[18px] h-[18px] rounded-full border border-black/10" style="background:${COLORS[c].hex}"></span>`).join('');
+        return `<article class="bg-cream-soft border border-line rounded-2xl overflow-hidden cursor-pointer transition hover:-translate-y-1.5 hover:shadow-xl hover:border-sogan" style="animation:pop .4s ease ${i*0.05}s backwards" onclick="location.href='/motif/${m.id}'">
+          <div class="aspect-[4/5] relative">
+            <div style="position:absolute;inset:0;">${patternSVG(m)}</div>
+            <img src="/images/motifs/${m.id}.jpg" alt="Motif ${m.name}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'" />
+          </div>
+          <div class="p-5">
+            <span class="text-[0.76rem] font-semibold tracking-[0.1em] uppercase text-sogan">${m.region}</span>
+            <h3 class="font-display text-2xl my-1.5">${m.name}</h3>
+            <p class="text-sm text-ink-soft leading-relaxed">${m.summary}</p>
+            <div class="flex gap-1.5 mt-4">${dots}</div>
+          </div>
+        </article>`;
+      }).join('');
+    }
+    render();
+  </script>
+</Layout>
+
+<style>
+  @keyframes pop { from { opacity: 0; transform: translateY(20px) scale(.97); } to { opacity: 1; } }
+</style>
